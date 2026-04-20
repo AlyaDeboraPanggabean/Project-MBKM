@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload - Secure PDF System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f4f7fb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar-custom {
+            background-color: #005baa;
+        }
+
+        .btn-primary {
+            background-color: #005baa;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #003f7f;
+        }
+
+        .btn-accent {
+            background-color: #f37021;
+            border: none;
+            color: white;
+        }
+
+        .btn-accent:hover {
+            background-color: #d95f10;
+        }
+
+        .card {
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            border: none;
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: #005baa;
+        }
+
+        .info-box {
+            background-color: #eef5ff;
+            border-left: 5px solid #005baa;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-custom navbar-dark px-4">
+    <span class="navbar-brand fw-bold">Secure PDF System</span>
+
+    <div>
+        <a href="/upload" class="btn btn-light btn-sm">Upload</a>
+        <a href="/verify" class="btn btn-light btn-sm">Verify</a>
+        <a href="/documents" class="btn btn-light btn-sm">Documents</a>
+        <a href="/logout" class="btn btn-warning btn-sm">Logout</a>
+    </div>
+</nav>
+
+<div class="container mt-5">
+
+    <!-- TITLE -->
+    <div class="mb-4">
+        <h3 class="section-title">Upload & Secure PDF</h3>
+        <p class="text-muted">Unggah dokumen untuk ditandatangani secara digital dan diamankan</p>
+    </div>
+
+    <!-- ALERT -->
+    {% if message %}
+    <div class="alert alert-{{ status }}">
+        <b>Status:</b> {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- SUCCESS INFO -->
+    {% if signed_file %}
+    <div class="info-box mb-4">
+        <b>Dokumen berhasil diamankan.</b><br>
+        File telah diberi digital signature, metadata keamanan, dan proteksi anti-tamper.
+    </div>
+    {% endif %}
+
+    <div class="row">
+
+        <!-- FORM -->
+        <div class="col-md-6">
+            <div class="card p-4">
+                <h5 class="mb-3">Upload Dokumen</h5>
+
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">File PDF</label>
+                        <input type="file" name="file" class="form-control" accept=".pdf" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Pesan Rahasia (Opsional)</label>
+                        <input type="text" name="secret_message" class="form-control" placeholder="Contoh: kode internal / catatan tersembunyi">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        Upload & Sign
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- INFO PANEL -->
+        <div class="col-md-6">
+            <div class="card p-4">
+                <h5 class="mb-3">Keamanan yang Diterapkan</h5>
+
+                <ul style="font-size: 14px;">
+                    <li>Digital Signature (PKI)</li>
+                    <li>Hash Verification (SHA-256)</li>
+                    <li>Metadata Protection</li>
+                    <li>Anti-Replay Attack (Doc ID)</li>
+                    <li>Steganografi (Pesan Tersembunyi)</li>
+                </ul>
+
+                <hr>
+
+                <p class="text-muted" style="font-size: 13px;">
+                    Sistem ini memastikan dokumen tidak dapat dimodifikasi tanpa terdeteksi dan memiliki lapisan keamanan berlapis.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

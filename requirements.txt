@@ -1,0 +1,8 @@
+Flask
+flask-session
+cryptography
+pyhanko
+PyPDF2
+reportlab
+python-dotenv
+gunicorn
