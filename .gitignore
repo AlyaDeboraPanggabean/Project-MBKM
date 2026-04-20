@@ -1,0 +1,6 @@
+.env
+*.pem
+database.db
+flask_session/
+uploads/
+__pycache__/
