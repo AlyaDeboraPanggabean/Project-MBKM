@@ -72,12 +72,12 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 ALLOWED_EXTENSIONS = {'pdf'}
 
 # KEY untuk enkripsi (HARUS tetap sama)
-STEGO_KEY = os.getenv("STEGO_KEY").encode()
+stego_key_env = os.getenv("STEGO_KEY").encode()
+
 if not stego_key_env:
     raise ValueError("STEGO_KEY tidak ditemukan di environment variables")
 
 STEGO_KEY = stego_key_env.encode()
-
 cipher = Fernet(STEGO_KEY)
 
 def encrypt_message(message):
