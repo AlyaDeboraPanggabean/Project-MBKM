@@ -472,14 +472,14 @@ def register():
             c = conn.cursor()
             token = secrets.token_urlsafe(32)  # Generate token unik untuk verifikasi
             c.execute('''
-                INSERT INTO users (employee_id, email, phone, password, verification_token)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO users (employee_id, email, phone, password, verification_token, is_verified)
+                VALUES (?, ?, ?, ?, ?, 1)
             ''', (employee_id, email, phone, hashed_password, token))
             conn.commit()
             conn.close()
 
             # Kirim email verifikasi
-            send_verification_email(email, token)
+            # send_verification_email(email, token)
 
             verification_link = f"http://127.0.0.1:5000/verify-email/{token}"
 
