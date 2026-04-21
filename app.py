@@ -72,7 +72,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 ALLOWED_EXTENSIONS = {'pdf'}
 
 # KEY untuk enkripsi (HARUS tetap sama)
-stego_key_env = os.getenv("STEGO_KEY").encode()
+stego_key_env = os.getenv("STEGO_KEY")
 
 if not stego_key_env:
     raise ValueError("STEGO_KEY tidak ditemukan di environment variables")
