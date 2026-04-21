@@ -741,7 +741,7 @@ def list_documents():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('database_v2.db')
     c = conn.cursor()
     c.execute("SELECT id, filename, file_hash, upload_time FROM documents ORDER BY id DESC")
     documents = c.fetchall()
