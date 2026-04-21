@@ -44,6 +44,9 @@ from dotenv import load_dotenv
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
+env_path = os.path.join(os.getcwd(), '.env')
+load_dotenv(env_path)
+
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -68,11 +71,13 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 ALLOWED_EXTENSIONS = {'pdf'}
 
-env_path = os.path.join(os.getcwd(), '.env')
-load_dotenv(env_path)
-
 # KEY untuk enkripsi (HARUS tetap sama)
 STEGO_KEY = os.getenv("STEGO_KEY").encode()
+if not stego_key_env:
+    raise ValueError("STEGO_KEY tidak ditemukan di environment variables")
+
+STEGO_KEY = stego_key_env.encode()
+
 cipher = Fernet(STEGO_KEY)
 
 def encrypt_message(message):
@@ -207,9 +212,6 @@ def extract_hidden_text_raw(pdf_path):
         print("Error extract stego:", e)
         return None
     
-def sign_metadata(data_str):
-    return hashlib.sha256((data_str + METADATA_SECRET).encode()).hexdigest()
-
 def sign_metadata(data):
     with open("private_key.pem", "rb") as key_file:
         private_key = serialization.load_pem_private_key(
@@ -717,18 +719,16 @@ def verify_file():
     return render_template('verify.html')
 
 def extract_stego_from_text(pdf_path):
-   if "[STEGO AREA]" in text and "SECURE_DOC::" in text:
     try:
-        # ambil bagian setelah label area
-        area_part = text.split("[STEGO AREA]")[1]
+        text = extract_text_from_pdf(pdf_path)
 
-        # ambil stego setelah tag
-        stego_part = area_part.split("SECURE_DOC::")[1]
+        if "[STEGO AREA]" in text and "SECURE_DOC::" in text:
+            area_part = text.split("[STEGO AREA]")[1]
+            stego_part = area_part.split("SECURE_DOC::")[1]
+            stego_clean = stego_part.split()[0]
+            return stego_clean
 
-        # bersihin sampai spasi / newline
-        stego_clean = stego_part.split()[0]
-
-        return stego_clean
+        return None
 
     except:
         return None
@@ -741,7 +741,7 @@ def list_documents():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect('database_v2.db')
+    conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("SELECT id, filename, file_hash, upload_time FROM documents ORDER BY id DESC")
     documents = c.fetchall()
