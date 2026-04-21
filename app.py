@@ -3,7 +3,7 @@ from datetime import datetime
 import sqlite3
 import os
 import hashlib  
-from flask_session import Session
+# from flask_session import Session
 
 from cryptography.x509.oid import NameOID
 
@@ -24,7 +24,7 @@ from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
 from pyhanko.sign import signers
 from pyhanko.sign.signers import PdfSignatureMetadata
 
-# ==== IMPORT UNTUK VERIFIKASI ====
+# ==== IMPORT UNTUK VERIFIKASI ====F
 from pyhanko.sign.validation import validate_pdf_signature
 from pyhanko.pdf_utils.reader import PdfFileReader
 # =================================
@@ -49,19 +49,19 @@ app.secret_key = os.getenv("SECRET_KEY")
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB limit
 app.config['SESSION_PERMANENT'] = False
-app.config['SESSION_TYPE'] = 'filesystem'  # simpan session di filesystem
+# app.config['SESSION_TYPE'] = 'filesystem'  # simpan session di filesystem
 app.config['SESSION_COOKIE_SECURE'] = False  # set True kalau pakai HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-app.config['SESSION_FILE_DIR'] = './flask_session'  # Folder untuk session
+# app.config['SESSION_FILE_DIR'] = './flask_session'  # Folder untuk session
 
 METADATA_SECRET = "rahasia_super_aman_123"
 
 # Buat folder session
 os.makedirs('./flask_session', exist_ok=True)
 
-Session(app)  # Inisialisasi Flask-Session
+# Session(app)  # Inisialisasi Flask-Session
 
 # Buat folder uploads jika belum ada
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
