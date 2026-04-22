@@ -257,6 +257,19 @@ def send_verification_email(to_email, token):
     except Exception as e:
         print("Error kirim email:", e)
 
+def write_key_files():
+    private_key = os.getenv("PRIVATE_KEY")
+    certificate = os.getenv("CERTIFICATE")
+
+    if not private_key or not certificate:
+        raise ValueError("PRIVATE_KEY / CERTIFICATE belum diset di environment")
+
+    with open("temp_private_key.pem", "w") as f:
+        f.write(private_key)
+
+    with open("temp_certificate.pem", "w") as f:
+        f.write(certificate)
+
 # =========================
 # DIGITAL SIGN FUNCTION
 # =========================
@@ -287,9 +300,12 @@ def sign_pdf(input_path, output_path, secret_message=None):
         embed_metadata(input_path, hidden_data)
 
         # ===== STEP 3: SIGN FILE YANG SUDAH ADA METADATA =====
+        # Tulis key dari ENV ke file sementara
+        write_key_files()
+
         signer = SimpleSigner.load(
-            key_file=io.BytesIO(os.getenv("PRIVATE_KEY").encode()),
-            cert_file=io.BytesIO(os.getenv("CERTIFICATE").encode()),
+            key_file="temp_private_key.pem",
+            cert_file="temp_certificate.pem",
             key_passphrase=None
         )
 
@@ -342,6 +358,13 @@ def sign_pdf(input_path, output_path, secret_message=None):
         )
         conn.commit()
         conn.close()
+
+        # Hapus file sementara
+        if os.path.exists("temp_private_key.pem"):
+            os.remove("temp_private_key.pem")
+
+        if os.path.exists("temp_certificate.pem"):
+            os.remove("temp_certificate.pem")
 
         return True
 
