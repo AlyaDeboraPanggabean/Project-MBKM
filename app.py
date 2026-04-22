@@ -215,11 +215,12 @@ def extract_hidden_text_raw(pdf_path):
         return None
     
 def sign_metadata(data):
-    with open("private_key.pem", "rb") as key_file:
-        private_key = serialization.load_pem_private_key(
-            key_file.read(),
-            password=None
-        )
+    private_key_data = os.getenv("PRIVATE_KEY").encode()
+
+    private_key = serialization.load_pem_private_key(
+        private_key_data,
+        password=None
+    )
 
     data_bytes = json.dumps(data, sort_keys=True).encode()
 
@@ -287,8 +288,8 @@ def sign_pdf(input_path, output_path, secret_message=None):
 
         # ===== STEP 3: SIGN FILE YANG SUDAH ADA METADATA =====
         signer = SimpleSigner.load(
-            key_file="private_key.pem",
-            cert_file="certificate.pem",
+            key_file=io.BytesIO(os.getenv("PRIVATE_KEY").encode()),
+            cert_file=io.BytesIO(os.getenv("CERTIFICATE").encode()),
             key_passphrase=None
         )
 
