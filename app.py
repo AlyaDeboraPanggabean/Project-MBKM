@@ -311,7 +311,7 @@ def sign_pdf(input_path, output_path, secret_message=None):
 
         print("DEBUG STEGO:", hidden_text)
 
-        embed_hidden_text_raw(input_path, hidden_text)
+        # embed_hidden_text_raw(input_path, hidden_text)
         embed_text_in_pdf(input_path, input_path, hidden_text)
 
         # ===== STEP 3: SIGN FILE YANG SUDAH ADA METADATA =====
