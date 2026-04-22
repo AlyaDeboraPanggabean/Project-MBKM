@@ -1,170 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Verify - Secure PDF System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <title>Verifikasi Dokumen</title>
     <style>
         body {
-            background-color: #f4f7fb;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial;
+            background: #f4f6f8;
+            padding: 20px;
         }
-
-        .navbar-custom {
-            background-color: #005baa;
+        .container {
+            max-width: 700px;
+            margin: auto;
         }
-
         .card {
-            border-radius: 16px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .success { border-left: 6px solid #28a745; }
+        .warning { border-left: 6px solid #ffc107; }
+        .danger  { border-left: 6px solid #dc3545; }
+
+        h2 { margin-top: 0; }
+
+        .label {
+            font-weight: bold;
+        }
+
+        .value {
+            margin-bottom: 10px;
+        }
+
+        .upload-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
             border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
         }
 
-        .status-valid {
-            background-color: #e6f7ee;
-            border-left: 6px solid #28a745;
-            padding: 15px;
-            border-radius: 10px;
-        }
-
-        .status-invalid {
-            background-color: #fdecea;
-            border-left: 6px solid #dc3545;
-            padding: 15px;
-            border-radius: 10px;
-        }
-
-        .section-title {
-            color: #005baa;
-            font-weight: 600;
-        }
-
-        .detail-box {
-            background-color: #f8f9fa;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
+        button:hover {
+            background: #0056b3;
         }
     </style>
 </head>
-
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar navbar-custom navbar-dark px-4">
-    <span class="navbar-brand fw-bold">Secure PDF System</span>
+<div class="container">
 
-    <div>
-        <a href="/upload" class="btn btn-light btn-sm">Upload</a>
-        <a href="/verify" class="btn btn-light btn-sm">Verify</a>
-        <a href="/documents" class="btn btn-light btn-sm">Documents</a>
-        <a href="/logout" class="btn btn-warning btn-sm">Logout</a>
-    </div>
-</nav>
-
-<div class="container mt-5">
-
-    <!-- TITLE -->
-    <div class="mb-4">
-        <h3 class="section-title">Verifikasi Dokumen</h3>
-        <p class="text-muted">Periksa keaslian dan integritas dokumen PDF</p>
+    <!-- UPLOAD -->
+    <div class="upload-box">
+        <h2>Verifikasi Dokumen</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" required>
+            <br><br>
+            <button type="submit">Cek Dokumen</button>
+        </form>
     </div>
 
-    <div class="row">
+    <!-- HASIL -->
+    {% if message %}
+    <div class="card {{ status }}">
+        <h2>Hasil Analisis</h2>
+        <p>{{ message }}</p>
+    </div>
 
-        <!-- FORM -->
-        <div class="col-md-5">
-            <div class="card p-4">
-                <h5 class="mb-3">Upload untuk Verifikasi</h5>
+    <!-- IDENTITAS -->
+    <div class="card">
+        <h3>Informasi Dokumen</h3>
 
-                <form method="POST" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label class="form-label">File PDF</label>
-                        <input type="file" name="file" class="form-control" required>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100">
-                        Verifikasi Dokumen
-                    </button>
-                </form>
-            </div>
+        <div class="value">
+            <span class="label">Asal Dokumen:</span><br>
+            {{ original_owner if original_owner else "Tidak diketahui" }}
         </div>
 
-        <!-- RESULT -->
-        <div class="col-md-7">
-            {% if message %}
-            
-            <div class="
-                {% if status == 'success' %}
-                    status-valid
-                {% else %}
-                    status-invalid
-                {% endif %}
-                ">
-                <h5>
-                    {% if status == 'success' %}
-                        ✓ Dokumen Valid
-                    {% else %}
-                        ✗ Dokumen Bermasalah
-                    {% endif %}
-                </h5>
-                <p>{{ message }}</p>
-                    <p><b>Author:</b> {{ author }}</p>
-                    <p><b>Creator:</b> {{ creator }}</p>
-                    <p><b>Producer:</b> {{ producer }}</p>
-            </div>
-
-            <div class="card p-4 mt-3">
-                <h5 class="mb-3">Detail Dokumen</h5>
-
-                <div class="detail-box">
-                    {% if signer %}
-                    <p><b>Penandatangan:</b> {{ signer }}</p>
-                    {% endif %}
-
-                    {% if author %}
-                    <p><b>Author:</b> {{ author }}</p>
-                    {% endif %}
-
-                    {% if creator %}
-                    <p><b>Creator:</b> {{ creator }}</p>
-                    {% endif %}
-
-                    {% if producer %}
-                    <p><b>Producer:</b> {{ producer }}</p>
-                    {% endif %}
-
-                    {% if country %}
-                    <p><b>Negara:</b> {{ country }}</p>
-                    {% endif %}
-
-                    {% if doc_id %}
-                    <p><b>Document ID:</b> {{ doc_id }}</p>
-                    {% endif %}
-
-                    {% if timestamp %}
-                    <p><b>Waktu Tanda Tangan:</b> {{ timestamp }}</p>
-                    {% endif %}
-
-                    {% if metadata_status %}
-                    <p><b>Status Metadata:</b> {{ metadata_status }}</p>
-                    {% endif %}
-                </div>
-            </div>
-
-            {% endif %}
-
-            {% if stego_message %}
-            <div class="card p-4 mt-3">
-                <h5>Pesan Tersembunyi</h5>
-                <div class="alert alert-info">
-                    {{ stego_message }}
-                </div>
-            </div>
-            {% endif %}
+        <div class="value">
+            <span class="label">ID Dokumen:</span><br>
+            {{ doc_id if doc_id else "-" }}
         </div>
 
+        <div class="value">
+            <span class="label">Waktu Dibuat:</span><br>
+            {{ timestamp if timestamp else "-" }}
+        </div>
     </div>
+
+    <!-- ANALISIS -->
+    <div class="card">
+        <h3>Detail Analisis</h3>
+
+        <div class="value">
+            <span class="label">Kemiripan:</span><br>
+            {{ message }}
+        </div>
+
+        <div class="value">
+            <span class="label">Status Metadata:</span><br>
+            {{ metadata_status }}
+        </div>
+    </div>
+
+    <!-- STEGO -->
+    {% if stego_message %}
+    <div class="card">
+        <h3>Data Tersembunyi (Steganografi)</h3>
+        <pre>{{ stego_message }}</pre>
+    </div>
+    {% endif %}
+
+    {% endif %}
 
 </div>
 

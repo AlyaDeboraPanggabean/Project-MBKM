@@ -5,6 +5,8 @@ import os
 import hashlib  
 # from flask_session import Session
 
+from difflib import SequenceMatcher
+
 from cryptography.x509.oid import NameOID
 
 from cryptography.fernet import Fernet
@@ -303,12 +305,17 @@ def sign_pdf(input_path, output_path, secret_message=None):
             with open(output_path, 'wb') as outf:
                 pdf_signer.sign_pdf(writer, output=outf)
         
-        # STEP STEGANOGRAFI
-        if secret_message:
-            encrypted_msg = encrypt_message(secret_message)
-            hidden_text = f"SECURE_DOC::{encrypted_msg}"
-        else:
-            hidden_text = "SECURE_DOC::EMPTY"
+        #  STEGO IDENTITAS DOKUMEN
+        data_stego = {
+            "doc_id": doc_id,
+            "user": session.get("user_email"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        # ubah jadi string lalu encrypt
+        encrypted_msg = encrypt_message(json.dumps(data_stego))
+
+        hidden_text = f"SECURE_DOC::{encrypted_msg}"
         print("DEBUG STEGO:", hidden_text)
         embed_hidden_text_raw(output_path, hidden_text)
         embed_text_in_pdf(output_path, output_path, hidden_text)
@@ -321,13 +328,15 @@ def sign_pdf(input_path, output_path, secret_message=None):
         # ===== STEP 5: SIMPAN KE DB =====
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
+        original_text = extract_text_from_pdf(input_path)
         c.execute(
-            "INSERT INTO documents (filename, upload_time, file_hash, doc_id) VALUES (?, ?, ?, ?)",
+            "INSERT INTO documents (filename, upload_time, file_hash, doc_id, content) VALUES (?, ?, ?, ?, ?)",
             (
                 os.path.basename(output_path),
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 final_hash,
-                doc_id
+                doc_id,
+                original_text
             )
         )
         conn.commit()
@@ -388,7 +397,8 @@ def init_db():
             filename TEXT,
             upload_time TEXT,
             file_hash TEXT,
-            doc_id TEXT
+            doc_id TEXT,
+            content TEXT
         )
     ''')
 
@@ -603,19 +613,45 @@ def verify_file():
                 # Prioritas: kalau stego visual ada, pakai itu
                 if stego_text:
                     try:
-                        stego_message = decrypt_message(stego_text)
+                        stego_raw_data = decrypt_message(stego_text)
+                        stego_json = json.loads(stego_raw_data)
+
+                        stego_user = stego_json.get("user")
+                        stego_doc_id = stego_json.get("doc_id")
+                        stego_time = stego_json.get("timestamp")
+
+                        stego_message = stego_raw_data  # kalau masih mau ditampilkan mentah
+
                     except:
                         stego_message = "Gagal decrypt stego visual"
+                        stego_user = None
+                        stego_doc_id = None
+                        stego_time = None
                 elif stego_raw:
                     try:
-                        # ambil bagian setelah SECURE_DOC::
                         raw_msg = stego_raw.replace("SECURE_DOC::", "")
+
                         if raw_msg != "EMPTY":
-                            stego_message = decrypt_message(raw_msg)
+                            stego_raw_data = decrypt_message(raw_msg)
+                            stego_json = json.loads(stego_raw_data)
+
+                            stego_user = stego_json.get("user")
+                            stego_doc_id = stego_json.get("doc_id")
+                            stego_time = stego_json.get("timestamp")
+
+                            stego_message = stego_raw_data
+
                         else:
                             stego_message = "(kosong)"
+                            stego_user = None
+                            stego_doc_id = None
+                            stego_time = None
+
                     except:
                         stego_message = "Gagal decrypt stego raw"
+                        stego_user = None
+                        stego_doc_id = None
+                        stego_time = None
                 else:
                     stego_message = None
                         
@@ -643,63 +679,56 @@ def verify_file():
                 result = c.fetchone()
                 conn.close()
                 # ==========================================
-                
-                # Cek apakah ada signature
-                with open(filepath, 'rb') as f:
-                    reader = PdfFileReader(f, strict=False)  
-                    
-                    if not reader.embedded_signatures:
-                        return render_template('verify.html',
-                                               message="Dokumen TIDAK memiliki digital signature!",
-                                               status="warning")
-                    signatures = reader.embedded_signatures
+                                
+                # ===== CEK IDENTITAS DOKUMEN =====
+                if not metadata_doc_id:
+                    message = "Dokumen tidak memiliki identitas (bukan dari sistem)"
+                    status_msg = "warning"
 
-                    for sig in signatures:
-                        cert = sig.signer_cert
+                elif not result:
+                    message = "Dokumen tidak terdaftar di sistem"
+                    status_msg = "warning"
 
-                        subject = cert.subject.native
+                else:
+                    # ===== AMBIL TEKS ASLI DARI DB =====
+                    conn = sqlite3.connect('database.db')
+                    c = conn.cursor()
+                    c.execute("SELECT content FROM documents WHERE doc_id = ?", (metadata_doc_id,))
+                    db_result = c.fetchone()
+                    conn.close()
 
-                        signer_name = subject.get("organization_name", "Unknown")
-                        signer_country = subject.get("country_name", "Unknown")
-                    
-                    print(f"DEBUG - Hash dari database: {result[0] if result else 'Tidak ada'}")
-                    print(f"DEBUG - Hash file sekarang: {current_hash}")
-                    print(f"DEBUG - Sama? {result and result[0] == current_hash}")
-                    
-                    # ===== BANDINGKAN HASH =====
-                    
-                    if not result:
-                        message = "⚠️ Dokumen tidak terdaftar (kemungkinan replay attack)"
+                    original_text = db_result[0] if db_result else ""
+                    current_text = extract_text_from_pdf(filepath)
+
+                    # ===== PERBANDINGAN SEDERHANA =====
+                    score = similarity(original_text, current_text)
+
+                    print("DEBUG SIMILARITY:", score)
+
+                    if score > 0.95:
+                        message = f"Dokumen ASLI (kemiripan {round(score*100,2)}%)"
+                        status_msg = "success"
+
+                    elif score > 0.7:
+                        message = f"Dokumen mengalami perubahan sebagian (kemiripan {round(score*100,2)}%)"
                         status_msg = "warning"
 
-                    elif result[0] == current_hash:
-                        if metadata_hash and metadata_valid:
-                            message = "✓ Dokumen VALID (4 Layer) - Signature, DB, Metadata, Anti-Replay OK"
-                            status_msg = "success"
-                        elif metadata_hash:
-                            message = "⚠️ Metadata ada tapi tidak valid (terindikasi manipulasi)"
-                            status_msg = "warning"
-                        else:
-                            message = "✓ Dokumen VALID - Tanpa metadata"
-                            status_msg = "info"
-
                     else:
-                        message = "✗ Dokumen TIDAK VALID - File sudah diubah"
+                        message = f"Dokumen sudah dimodifikasi signifikan (kemiripan {round(score*100,2)}%)"
                         status_msg = "danger"
 
                 return render_template(
                     'verify.html',
                     message=message,
                     status=status_msg,
-                    signer=signer_name,
-                    country=signer_country,
                     doc_id=metadata_doc_id,
                     timestamp=hidden_data.get("timestamp") if hidden_data else None,
                     metadata_status="Valid" if metadata_valid else "Tidak Valid",
                     stego_message=stego_message,
                     author=author,
                     creator=creator,
-                    producer=producer
+                    producer=producer,
+                    original_owner=stego_user
                 )
 
                 return response
@@ -743,7 +772,7 @@ def list_documents():
 
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute("SELECT id, filename, file_hash, upload_time FROM documents ORDER BY id DESC")
+    c.execute("SELECT id, filename, doc_id, upload_time FROM documents ORDER BY id DESC")
     documents = c.fetchall()
     conn.close()
 
