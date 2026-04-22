@@ -299,6 +299,21 @@ def sign_pdf(input_path, output_path, secret_message=None):
         temp_path = input_path.replace(".pdf", "_temp.pdf")
         embed_metadata(input_path, hidden_data)
 
+        # 🔥 TAMBAHKAN DI SINI (INI YANG BENER)
+        data_stego = {
+            "doc_id": doc_id,
+            "user": session.get("user_email"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        encrypted_msg = encrypt_message(json.dumps(data_stego))
+        hidden_text = f"SECURE_DOC::{encrypted_msg}"
+
+        print("DEBUG STEGO:", hidden_text)
+
+        embed_hidden_text_raw(input_path, hidden_text)
+        embed_text_in_pdf(input_path, input_path, hidden_text)
+
         # ===== STEP 3: SIGN FILE YANG SUDAH ADA METADATA =====
         # Tulis key dari ENV ke file sementara
         write_key_files()
@@ -322,21 +337,7 @@ def sign_pdf(input_path, output_path, secret_message=None):
             with open(output_path, 'wb') as outf:
                 pdf_signer.sign_pdf(writer, output=outf)
         
-        #  STEGO IDENTITAS DOKUMEN
-        data_stego = {
-            "doc_id": doc_id,
-            "user": session.get("user_email"),
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-
-        # ubah jadi string lalu encrypt
-        encrypted_msg = encrypt_message(json.dumps(data_stego))
-
-        hidden_text = f"SECURE_DOC::{encrypted_msg}"
-        print("DEBUG STEGO:", hidden_text)
-        embed_hidden_text_raw(output_path, hidden_text)
-        embed_text_in_pdf(output_path, output_path, hidden_text)
-
+       
         # ===== STEP 4: HITUNG HASH FINAL =====
         with open(output_path, 'rb') as f:
             file_data = f.read()
