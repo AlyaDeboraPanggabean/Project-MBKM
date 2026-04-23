@@ -165,31 +165,32 @@ def embed_text_in_pdf(input_path, output_path, text):
         reader = PdfReader(input_path)
         writer = PdfWriter()
 
-        for page in reader.pages:
-            writer.add_page(page)
-
-        # buat layer teks kecil (pojok kanan bawah)
         packet = io.BytesIO()
         first_page = reader.pages[0]
+
         width = float(first_page.mediabox.width)
         height = float(first_page.mediabox.height)
 
         can = canvas.Canvas(packet, pagesize=(width, height))
-
         can.setFont("Helvetica", 5)
 
-        # label biar jelas (ini penting buat presentasi)
-        can.drawString(50, 20, "[STEGO AREA]")
+        # tulis stego (JANGAN nutup konten utama)
+        can.drawString(10, 10, "[STEGO AREA]")
+        can.drawString(10, 5, text)
 
-        # isi pesan rahasia
-        can.drawString(50, 10, text)
         can.save()
-
         packet.seek(0)
+
         overlay_pdf = PdfReader(packet)
 
-        # gabungkan ke halaman pertama
-        writer.pages[0].merge_page(overlay_pdf.pages[0])
+        for i, page in enumerate(reader.pages):
+            if i == 0:
+                # 🔥 FIX: copy dulu page biar ga overwrite reference
+                base_page = page
+                base_page.merge_page(overlay_pdf.pages[0])
+                writer.add_page(base_page)
+            else:
+                writer.add_page(page)
 
         with open(output_path, "wb") as f:
             writer.write(f)
