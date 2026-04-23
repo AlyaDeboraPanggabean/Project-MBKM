@@ -280,7 +280,7 @@ def write_key_files():
 def sign_pdf(input_path, output_path, secret_message=None):
     try:
         # ===== STEP 1: HITUNG HASH FILE ASLI =====
-        with open(temp_embed_path, 'rb') as f:
+        with open(input_path, 'rb') as f:
             file_data = f.read()
             initial_hash = hashlib.sha256(file_data).hexdigest()
 
@@ -328,7 +328,7 @@ def sign_pdf(input_path, output_path, secret_message=None):
             key_passphrase=None
         )
 
-        with open(temp_embed_path, 'rb') as inf:
+        with open(input_path, 'rb') as inf:
             writer = IncrementalPdfFileWriter(inf, strict=False)
 
             meta = signers.PdfSignatureMetadata(
