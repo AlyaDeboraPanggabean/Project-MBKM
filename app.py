@@ -167,15 +167,19 @@ def embed_text_in_pdf(input_path, output_path, text):
 
         # buat layer teks kecil (pojok kanan bawah)
         packet = io.BytesIO()
-        can = canvas.Canvas(packet, pagesize=letter)
+        first_page = reader.pages[0]
+        width = float(first_page.mediabox.width)
+        height = float(first_page.mediabox.height)
+
+        can = canvas.Canvas(packet, pagesize=(width, height))
 
         can.setFont("Helvetica", 5)
 
         # label biar jelas (ini penting buat presentasi)
-        can.drawString(400, 15, "[STEGO AREA]")
+        can.drawString(50, 20, "[STEGO AREA]")
 
         # isi pesan rahasia
-        can.drawString(400, 5, text)
+        can.drawString(50, 10, text[:50])
         can.save()
 
         packet.seek(0)
@@ -276,7 +280,7 @@ def write_key_files():
 def sign_pdf(input_path, output_path, secret_message=None):
     try:
         # ===== STEP 1: HITUNG HASH FILE ASLI =====
-        with open(input_path, 'rb') as f:
+        with open(temp_embed_path, 'rb') as f:
             file_data = f.read()
             initial_hash = hashlib.sha256(file_data).hexdigest()
 
@@ -311,8 +315,8 @@ def sign_pdf(input_path, output_path, secret_message=None):
 
         print("DEBUG STEGO:", hidden_text)
 
-        # embed_hidden_text_raw(input_path, hidden_text)
-        embed_text_in_pdf(input_path, input_path, hidden_text)
+        temp_embed_path = input_path.replace(".pdf", "_embed.pdf")
+        embed_text_in_pdf(input_path, temp_embed_path, hidden_text)
 
         # ===== STEP 3: SIGN FILE YANG SUDAH ADA METADATA =====
         # Tulis key dari ENV ke file sementara
@@ -324,7 +328,7 @@ def sign_pdf(input_path, output_path, secret_message=None):
             key_passphrase=None
         )
 
-        with open(input_path, 'rb') as inf:
+        with open(temp_embed_path, 'rb') as inf:
             writer = IncrementalPdfFileWriter(inf, strict=False)
 
             meta = signers.PdfSignatureMetadata(
