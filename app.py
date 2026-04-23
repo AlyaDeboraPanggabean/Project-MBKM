@@ -344,21 +344,21 @@ def sign_pdf(input_path, output_path, secret_message=None):
             final_hash = hashlib.sha256(file_data).hexdigest()
 
         # ===== STEP 5: SIMPAN KE DB =====
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        original_text = extract_text_from_pdf(input_path)
-        c.execute(
-            "INSERT INTO documents (filename, upload_time, file_hash, doc_id, content) VALUES (?, ?, ?, ?, ?)",
-            (
-                os.path.basename(output_path),
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                final_hash,
-                doc_id,
-                original_text
+        with sqlite3.connect('database.db', timeout=10) as conn:
+            c = conn.cursor()
+            original_text = extract_text_from_pdf(input_path)
+            c.execute(
+                "INSERT INTO documents (filename, upload_time, file_hash, doc_id, content) VALUES (?, ?, ?, ?, ?)",
+                (
+                    os.path.basename(output_path),
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    final_hash,
+                    doc_id,
+                    original_text
+                )
             )
-        )
         conn.commit()
-        conn.close()
+
 
         # Hapus file sementara
         if os.path.exists("temp_private_key.pem"):
@@ -414,18 +414,19 @@ def extract_metadata(pdf_path):
 # Init Database
 # =========================
 def init_db():
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS documents (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            filename TEXT,
-            upload_time TEXT,
-            file_hash TEXT,
-            doc_id TEXT,
-            content TEXT
-        )
-    ''')
+    with sqlite3.connect('database.db', timeout=10) as conn:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        c = conn.cursor()
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS documents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                filename TEXT,
+                upload_time TEXT,
+                file_hash TEXT,
+                doc_id TEXT,
+                content TEXT
+            )
+        ''')
 
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
@@ -439,7 +440,6 @@ def init_db():
         )
         ''')
     conn.commit()
-    conn.close()
 
 init_db()
 
@@ -459,11 +459,10 @@ def login():
         email = request.form['username']  # nanti bisa kamu rename jadi email
         password = request.form['password']
 
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute("SELECT password, is_verified FROM users WHERE email = ?", (email,))
-        user = c.fetchone()
-        conn.close()
+        with sqlite3.connect('database.db', timeout=10) as conn:
+            c = conn.cursor()
+            c.execute("SELECT password, is_verified FROM users WHERE email = ?", (email,))
+            user = c.fetchone()
 
         if user:
             stored_password = user[0]
@@ -505,15 +504,14 @@ def register():
         hashed_password = generate_password_hash(password)
 
         try:
-            conn = sqlite3.connect('database.db')
-            c = conn.cursor()
-            token = secrets.token_urlsafe(32)  # Generate token unik untuk verifikasi
-            c.execute('''
-                INSERT INTO users (employee_id, email, phone, password, verification_token, is_verified)
-                VALUES (?, ?, ?, ?, ?, 1)
-            ''', (employee_id, email, phone, hashed_password, token))
-            conn.commit()
-            conn.close()
+            with sqlite3.connect('database.db', timeout=10) as conn:
+                c = conn.cursor()
+                token = secrets.token_urlsafe(32)  # Generate token unik untuk verifikasi
+                c.execute('''
+                    INSERT INTO users (employee_id, email, phone, password, verification_token, is_verified)
+                    VALUES (?, ?, ?, ?, ?, 1)
+                ''', (employee_id, email, phone, hashed_password, token))
+                conn.commit()
 
             # Kirim email verifikasi
             # send_verification_email(email, token)
@@ -532,8 +530,8 @@ def register():
 
 @app.route('/verify-email/<token>')
 def verify_email(token):
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
+    with sqlite3.connect('database.db', timeout=10) as conn:
+        c = conn.cursor()
 
     # Cari user berdasarkan token
     c.execute("SELECT id FROM users WHERE verification_token = ?", (token,))
@@ -547,7 +545,7 @@ def verify_email(token):
             WHERE id = ?
         """, (user[0],))
         conn.commit()
-        conn.close()
+       
 
         return render_template("verify_success.html")
     else:
@@ -698,11 +696,11 @@ def verify_file():
                     metadata_valid = False
                 
                 # ===== AMBIL HASH ASLI DARI DATABASE =====
-                conn = sqlite3.connect('database.db')
-                c = conn.cursor()
+                with sqlite3.connect('database.db', timeout=10) as conn:
+                    c = conn.cursor()
                 c.execute("SELECT file_hash, doc_id FROM documents WHERE doc_id = ?", (metadata_doc_id,))
                 result = c.fetchone()
-                conn.close()
+                
                 # ==========================================
                                 
                 # ===== CEK IDENTITAS DOKUMEN =====
@@ -716,11 +714,11 @@ def verify_file():
 
                 else:
                     # ===== AMBIL TEKS ASLI DARI DB =====
-                    conn = sqlite3.connect('database.db')
-                    c = conn.cursor()
+                    with sqlite3.connect('database.db', timeout=10) as conn:
+                        c = conn.cursor()
                     c.execute("SELECT content FROM documents WHERE doc_id = ?", (metadata_doc_id,))
                     db_result = c.fetchone()
-                    conn.close()
+                    
 
                     original_text = db_result[0] if db_result else ""
                     current_text = extract_text_from_pdf(filepath)
@@ -795,11 +793,11 @@ def list_documents():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
+    with sqlite3.connect('database.db', timeout=10) as conn:
+        c = conn.cursor()
     c.execute("SELECT id, filename, doc_id, upload_time FROM documents ORDER BY id DESC")
     documents = c.fetchall()
-    conn.close()
+    
 
     return render_template('documents.html', documents=documents)
 
