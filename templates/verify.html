@@ -8,10 +8,12 @@
             background: #f4f6f8;
             padding: 20px;
         }
+
         .container {
-            max-width: 700px;
+            max-width: 800px;
             margin: auto;
         }
+
         .card {
             background: white;
             padding: 20px;
@@ -19,18 +21,21 @@
             margin-bottom: 20px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
+
         .success { border-left: 6px solid #28a745; }
         .warning { border-left: 6px solid #ffc107; }
         .danger  { border-left: 6px solid #dc3545; }
 
-        h2 { margin-top: 0; }
+        h2, h3 {
+            margin-top: 0;
+        }
 
         .label {
             font-weight: bold;
         }
 
         .value {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .upload-box {
@@ -52,6 +57,25 @@
         button:hover {
             background: #0056b3;
         }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .badge-success { background: #28a745; }
+        .badge-warning { background: #ffc107; color: black; }
+        .badge-danger  { background: #dc3545; }
+
+        pre {
+            background: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
     </style>
 </head>
 <body>
@@ -60,7 +84,7 @@
 
     <!-- UPLOAD -->
     <div class="upload-box">
-        <h2>Verifikasi Dokumen</h2>
+        <h2>🔍 Verifikasi Dokumen PDF</h2>
         <form method="POST" enctype="multipart/form-data">
             <input type="file" name="file" required>
             <br><br>
@@ -68,55 +92,78 @@
         </form>
     </div>
 
-    <!-- HASIL -->
     {% if message %}
+
+    <!-- HASIL UTAMA -->
     <div class="card {{ status }}">
         <h2>Hasil Analisis</h2>
+
         <p>{{ message }}</p>
+
+        {% if status == "success" %}
+            <span class="badge badge-success">ASLI</span>
+        {% elif status == "warning" %}
+            <span class="badge badge-warning">PERLU PERHATIAN</span>
+        {% else %}
+            <span class="badge badge-danger">TERMODIFIKASI</span>
+        {% endif %}
     </div>
 
-    <!-- IDENTITAS -->
+    <!-- INFORMASI DOKUMEN -->
     <div class="card">
-        <h3>Informasi Dokumen</h3>
+        <h3>📄 Informasi Dokumen</h3>
 
         <div class="value">
-            <span class="label">Asal Dokumen:</span><br>
-            {{ original_owner if original_owner else "Tidak diketahui" }}
+            <span class="label">Pemilik Dokumen:</span><br>
+            {{ original_owner or "Tidak diketahui" }}
         </div>
 
         <div class="value">
             <span class="label">ID Dokumen:</span><br>
-            {{ doc_id if doc_id else "-" }}
+            {{ doc_id or "-" }}
         </div>
 
         <div class="value">
             <span class="label">Waktu Dibuat:</span><br>
-            {{ timestamp if timestamp else "-" }}
+            {{ timestamp or "-" }}
         </div>
     </div>
 
-    <!-- ANALISIS -->
+    <!-- METADATA -->
     <div class="card">
-        <h3>Detail Analisis</h3>
-
-        <div class="value">
-            <span class="label">Kemiripan:</span><br>
-            {{ message }}
-        </div>
+        <h3>🧾 Metadata</h3>
 
         <div class="value">
             <span class="label">Status Metadata:</span><br>
             {{ metadata_status }}
         </div>
+
+        <div class="value">
+            <span class="label">Author:</span><br>
+            {{ author or "-" }}
+        </div>
+
+        <div class="value">
+            <span class="label">Creator:</span><br>
+            {{ creator or "-" }}
+        </div>
+
+        <div class="value">
+            <span class="label">Producer:</span><br>
+            {{ producer or "-" }}
+        </div>
     </div>
 
     <!-- STEGO -->
-    {% if stego_message %}
     <div class="card">
-        <h3>Data Tersembunyi (Steganografi)</h3>
-        <pre>{{ stego_message }}</pre>
+        <h3>🕵️ Data Tersembunyi (Steganografi)</h3>
+
+        {% if stego_message %}
+            <pre>{{ stego_message }}</pre>
+        {% else %}
+            <p>Tidak ditemukan data tersembunyi</p>
+        {% endif %}
     </div>
-    {% endif %}
 
     {% endif %}
 

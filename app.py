@@ -91,6 +91,9 @@ def decrypt_message(encrypted_message):
 # =========================
 # Helper
 # =========================
+def similarity(a, b):
+    return SequenceMatcher(None, a, b).ratio()
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -328,7 +331,7 @@ def sign_pdf(input_path, output_path, secret_message=None):
             key_passphrase=None
         )
 
-        with open(input_path, 'rb') as inf:
+        with open(temp_embed_path, 'rb') as inf:
             writer = IncrementalPdfFileWriter(inf, strict=False)
 
             meta = signers.PdfSignatureMetadata(
