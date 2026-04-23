@@ -182,7 +182,7 @@ def embed_text_in_pdf(input_path, output_path, text):
         can.drawString(50, 20, "[STEGO AREA]")
 
         # isi pesan rahasia
-        can.drawString(50, 10, text[:50])
+        can.drawString(50, 10, text)
         can.save()
 
         packet.seek(0)
@@ -282,13 +282,12 @@ def write_key_files():
 # =========================
 def sign_pdf(input_path, output_path, secret_message=None):
     try:
-        # ===== STEP 1: HITUNG HASH FILE ASLI =====
+        # ===== STEP 1: HASH FILE ASLI =====
         with open(input_path, 'rb') as f:
             file_data = f.read()
             initial_hash = hashlib.sha256(file_data).hexdigest()
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
         data_string = initial_hash + timestamp
         metadata_signature = sign_metadata(data_string)
 
@@ -297,32 +296,40 @@ def sign_pdf(input_path, output_path, secret_message=None):
         hidden_data = {
             "doc_id": doc_id,
             "hash": initial_hash,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "timestamp": timestamp,
             "signature": metadata_signature,
-            "secret_message": secret_message  # Tambahkan pesan rahasia ke metadata
+            "secret_message": secret_message
         }
 
-        # ===== STEP 2: EMBED METADATA KE FILE TEMP =====
-        temp_path = input_path.replace(".pdf", "_temp.pdf")
-        embed_metadata(input_path, hidden_data)
+        # ===== STEP 2: COPY KE FILE BARU (JANGAN TIMPA FILE ASLI!) =====
+        temp_meta_path = input_path.replace(".pdf", "_meta.pdf")
+        temp_embed_path = input_path.replace(".pdf", "_embed.pdf")
 
-        # 🔥 TAMBAHKAN DI SINI (INI YANG BENER)
+        # copy dulu
+        reader = PdfReader(input_path)
+        writer = PdfWriter()
+        for p in reader.pages:
+            writer.add_page(p)
+
+        with open(temp_meta_path, "wb") as f:
+            writer.write(f)
+
+        # ===== STEP 3: EMBED METADATA =====
+        embed_metadata(temp_meta_path, hidden_data)
+
+        # ===== STEP 4: STEGO =====
         data_stego = {
             "doc_id": doc_id,
             "user": session.get("user_email"),
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "timestamp": timestamp
         }
 
         encrypted_msg = encrypt_message(json.dumps(data_stego))
         hidden_text = f"SECURE_DOC::{encrypted_msg}"
 
-        print("DEBUG STEGO:", hidden_text)
+        embed_text_in_pdf(temp_meta_path, temp_embed_path, hidden_text)
 
-        temp_embed_path = input_path.replace(".pdf", "_embed.pdf")
-        embed_text_in_pdf(input_path, temp_embed_path, hidden_text)
-
-        # ===== STEP 3: SIGN FILE YANG SUDAH ADA METADATA =====
-        # Tulis key dari ENV ke file sementara
+        # ===== STEP 5: SIGN FILE YANG SUDAH FIX =====
         write_key_files()
 
         signer = SimpleSigner.load(
@@ -332,52 +339,45 @@ def sign_pdf(input_path, output_path, secret_message=None):
         )
 
         with open(temp_embed_path, 'rb') as inf:
-            writer = IncrementalPdfFileWriter(inf, strict=False)
+            writer = IncrementalPdfFileWriter(inf)
 
-            meta = signers.PdfSignatureMetadata(
-                field_name='Signature1',
-                md_algorithm='sha256'
-            )
+            meta = PdfSignatureMetadata(field_name='Signature1')
 
-            pdf_signer = PdfSigner(signature_meta=meta, signer=signer)
+            pdf_signer = PdfSigner(meta, signer=signer)
 
             with open(output_path, 'wb') as outf:
                 pdf_signer.sign_pdf(writer, output=outf)
-        
-       
-        # ===== STEP 4: HITUNG HASH FINAL =====
-        with open(output_path, 'rb') as f:
-            file_data = f.read()
-            final_hash = hashlib.sha256(file_data).hexdigest()
 
-        # ===== STEP 5: SIMPAN KE DB =====
-        with sqlite3.connect('database.db', timeout=10) as conn:
+        # ===== STEP 6: SIMPAN DB =====
+        with open(output_path, 'rb') as f:
+            final_hash = hashlib.sha256(f.read()).hexdigest()
+
+        with sqlite3.connect('database.db') as conn:
             c = conn.cursor()
             original_text = extract_text_from_pdf(input_path)
-            c.execute(
-                "INSERT INTO documents (filename, upload_time, file_hash, doc_id, content) VALUES (?, ?, ?, ?, ?)",
-                (
-                    os.path.basename(output_path),
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    final_hash,
-                    doc_id,
-                    original_text
-                )
-            )
-        conn.commit()
 
+            c.execute("""
+                INSERT INTO documents (filename, upload_time, file_hash, doc_id, content)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                os.path.basename(output_path),
+                timestamp,
+                final_hash,
+                doc_id,
+                original_text
+            ))
+            conn.commit()
 
-        # Hapus file sementara
-        if os.path.exists("temp_private_key.pem"):
-            os.remove("temp_private_key.pem")
-
-        if os.path.exists("temp_certificate.pem"):
-            os.remove("temp_certificate.pem")
+        # cleanup
+        for f in ["temp_private_key.pem", "temp_certificate.pem",
+                  temp_meta_path, temp_embed_path]:
+            if os.path.exists(f):
+                os.remove(f)
 
         return True
 
     except Exception as e:
-        print(f"Error signing PDF: {e}")
+        print("ERROR SIGN:", e)
         return False
     
 def extract_text_from_pdf(pdf_path):
