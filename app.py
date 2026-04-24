@@ -759,7 +759,8 @@ def verify_file():
                     author=author,
                     creator=creator,
                     producer=producer,
-                    original_owner=stego_user
+                    original_owner=stego_user,
+                    is_from_stego=True if stego_user else False
                 )
 
                 return response
