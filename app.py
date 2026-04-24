@@ -712,13 +712,13 @@ def verify_file():
                 # ==========================================
                                 
                 # ===== CEK IDENTITAS DOKUMEN =====
-                if not metadata_doc_id:
-                    message = "Dokumen tidak memiliki identitas (bukan dari sistem)"
-                    status_msg = "warning"
+                if stego_user or stego_doc_id:
+                    message = "Dokumen dikenali melalui steganografi"
+                    status_msg = "success"
 
-                elif not result:
-                    message = "Dokumen tidak terdaftar di sistem"
-                    status_msg = "warning"
+                elif not metadata_doc_id:
+                    message = "Dokumen tidak memiliki identitas (bukan dari sistem)"
+                    status_msg = "danger"
 
                 else:
                     # ===== AMBIL TEKS ASLI DARI DB =====
