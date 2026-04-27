@@ -7,6 +7,8 @@ import hashlib
 
 import shutil
 
+import fitz
+
 from difflib import SequenceMatcher
 
 from cryptography.x509.oid import NameOID
@@ -372,12 +374,11 @@ def sign_pdf(input_path, output_path, secret_message=None):
     
 def extract_text_from_pdf(pdf_path):
     try:
-        reader = PdfReader(pdf_path)
+        doc = fitz.open(pdf_path)
         full_text = ""
 
-        for page in reader.pages:
-            if page.extract_text():
-                full_text += page.extract_text()
+        for page in doc:
+            full_text += page.get_text()
 
         return full_text
 
