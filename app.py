@@ -323,7 +323,7 @@ def sign_pdf(input_path, output_path, secret_message=None):
         # ===== STEP 4: STEGO =====
         data_stego = {
             "doc_id": doc_id,
-            "user": session.get("user_email"),
+            "recipient": secret_message,
             "timestamp": timestamp
         }
 
