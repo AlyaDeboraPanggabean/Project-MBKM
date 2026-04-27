@@ -732,16 +732,19 @@ def verify_file():
 
                     print("DEBUG SIMILARITY:", score)
 
+                    similarity_percent = round(score * 100, 2)
+                    change_percent = round(100 - similarity_percent, 2)
+
                     if score > 0.95:
-                        message = f"Dokumen ASLI ({round(score*100,2)}%)"
+                        message = f"Dokumen ASLI | Kemiripan {similarity_percent}% | Perubahan {change_percent}%"
                         status_msg = "success"
 
                     elif score > 0.7:
-                        message = f"Dokumen mengalami sedikit perubahan ({round(score*100,2)}%)"
+                        message = f"Dokumen mengalami sedikit perubahan | Kemiripan {similarity_percent}% | Perubahan {change_percent}%"
                         status_msg = "warning"
 
                     else:
-                        message = f"Dokumen mengalami perubahan signifikan ({round(score*100,2)}%)"
+                        message = f"Dokumen mengalami perubahan signifikan | Kemiripan {similarity_percent}% | Perubahan {change_percent}%"
                         status_msg = "danger"
 
                 else:
