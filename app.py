@@ -5,6 +5,8 @@ import os
 import hashlib  
 # from flask_session import Session
 
+import shutil
+
 from difflib import SequenceMatcher
 
 from cryptography.x509.oid import NameOID
@@ -160,46 +162,46 @@ def embed_hidden_text_raw(pdf_path, hidden_text):
         print("Error stego raw:", e)
         return False
     
-def embed_text_in_pdf(input_path, output_path, text):
-    try:
-        reader = PdfReader(input_path)
-        writer = PdfWriter()
+# def embed_text_in_pdf(input_path, output_path, text):
+#     try:
+#         reader = PdfReader(input_path)
+#         writer = PdfWriter()
 
-        packet = io.BytesIO()
-        first_page = reader.pages[0]
+#         packet = io.BytesIO()
+#         first_page = reader.pages[0]
 
-        width = float(first_page.mediabox.width)
-        height = float(first_page.mediabox.height)
+#         width = float(first_page.mediabox.width)
+#         height = float(first_page.mediabox.height)
 
-        can = canvas.Canvas(packet, pagesize=(width, height))
-        can.setFont("Helvetica", 5)
+#         can = canvas.Canvas(packet, pagesize=(width, height))
+#         can.setFont("Helvetica", 5)
 
-        # tulis stego (JANGAN nutup konten utama)
-        can.drawString(10, 10, "[STEGO AREA]")
-        can.drawString(10, 5, text)
+#         # tulis stego (JANGAN nutup konten utama)
+#         can.drawString(10, 10, "[STEGO AREA]")
+#         can.drawString(10, 5, text)
 
-        can.save()
-        packet.seek(0)
+#         can.save()
+#         packet.seek(0)
 
-        overlay_pdf = PdfReader(packet)
+#         overlay_pdf = PdfReader(packet)
 
-        for i, page in enumerate(reader.pages):
-            if i == 0:
-                # 🔥 FIX: copy dulu page biar ga overwrite reference
-                base_page = page
-                base_page.merge_page(overlay_pdf.pages[0])
-                writer.add_page(base_page)
-            else:
-                writer.add_page(page)
+#         for i, page in enumerate(reader.pages):
+#             if i == 0:
+#                 # 🔥 FIX: copy dulu page biar ga overwrite reference
+#                 base_page = page
+#                 base_page.merge_page(overlay_pdf.pages[0])
+#                 writer.add_page(base_page)
+#             else:
+#                 writer.add_page(page)
 
-        with open(output_path, "wb") as f:
-            writer.write(f)
+#         with open(output_path, "wb") as f:
+#             writer.write(f)
 
-        return True
+#         return True
 
-    except Exception as e:
-        print("Error embed visual stego:", e)
-        return False
+#     except Exception as e:
+#         print("Error embed visual stego:", e)
+#         return False
 
 def extract_hidden_text_raw(pdf_path):
     try:
@@ -328,7 +330,8 @@ def sign_pdf(input_path, output_path, secret_message=None):
         encrypted_msg = encrypt_message(json.dumps(data_stego))
         hidden_text = f"SECURE_DOC::{encrypted_msg}"
 
-        embed_text_in_pdf(temp_meta_path, temp_embed_path, hidden_text)
+        shutil.copy(temp_meta_path, temp_embed_path)
+        embed_hidden_text_raw(temp_embed_path, hidden_text)
 
         # ===== STEP 5: SIGN FILE YANG SUDAH FIX =====
         write_key_files()
