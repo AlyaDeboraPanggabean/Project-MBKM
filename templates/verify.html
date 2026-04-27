@@ -52,7 +52,7 @@
     <div>
         <a href="/upload" class="btn btn-light btn-sm me-2">Upload</a>
         <a href="/documents" class="btn btn-light btn-sm me-2">Dokumen</a>
-        <a href="/verify" class="btn btn-warning btn-sm me-2">Verify</a>
+        <a href="/verify" class="btn btn-light btn-sm me-2">Verify</a>
         <a href="/logout" class="btn btn-danger btn-sm">Logout</a>
     </div>
 </nav>
@@ -87,7 +87,7 @@
     <div class="card p-4 mb-4">
         <h5 class="section-title">📄 Informasi Dokumen</h5>
 
-        <p><strong>🔍 Penyebar Terakhir:</strong><br>
+        <p><strong>🔍 Sumber Salinan Dokumen:</strong><br>
             {% if is_from_stego %}
                 <span class="badge bg-success">
                     {{ original_owner }}
