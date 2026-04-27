@@ -650,7 +650,7 @@ def verify_file():
                         stego_raw_data = decrypt_message(stego_text)
                         stego_json = json.loads(stego_raw_data)
 
-                        stego_user = stego_json.get("user")
+                        stego_user = stego_json.get("recipient")
                         stego_doc_id = stego_json.get("doc_id")
                         stego_time = stego_json.get("timestamp")
 
@@ -671,7 +671,7 @@ def verify_file():
                             stego_raw_data = decrypt_message(raw_msg)
                             stego_json = json.loads(stego_raw_data)
 
-                            stego_user = stego_json.get("user")
+                            stego_user = stego_json.get("recipient")
                             stego_doc_id = stego_json.get("doc_id")
                             stego_time = stego_json.get("timestamp")
 
