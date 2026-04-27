@@ -623,7 +623,7 @@ def verify_file():
                 metadata_all = extract_metadata(filepath)
                 hidden_data = metadata_all.get("hidden") if metadata_all else None
 
-                metadata_doc_id = hidden_data.get("doc_id") if hidden_data else None
+                metadata_doc_id = None
 
                 author = metadata_all.get("author") if metadata_all else None
                 creator = metadata_all.get("creator") if metadata_all else None
@@ -651,6 +651,8 @@ def verify_file():
                         stego_doc_id = stego_json.get("doc_id")
                         stego_time = stego_json.get("timestamp")
 
+                        metadata_doc_id = stego_doc_id
+
                         stego_message = stego_raw_data  # kalau masih mau ditampilkan mentah
 
                     except:
@@ -669,6 +671,8 @@ def verify_file():
                             stego_user = stego_json.get("user")
                             stego_doc_id = stego_json.get("doc_id")
                             stego_time = stego_json.get("timestamp")
+
+                            metadata_doc_id = stego_doc_id
 
                             stego_message = stego_raw_data
 
@@ -692,52 +696,39 @@ def verify_file():
                     metadata_timestamp = hidden_data.get("timestamp")
                     metadata_signature = hidden_data.get("signature")
 
-                    # Recreate signature
                     data_string = metadata_hash + metadata_timestamp
                     recalculated_signature = sign_metadata(data_string)
 
                     metadata_valid = (metadata_signature == recalculated_signature)
-
-                    print("DEBUG - Metadata valid:", metadata_valid)
                 else:
-                    metadata_hash = None
                     metadata_valid = False
                 
                 # ===== AMBIL HASH ASLI DARI DATABASE =====
                 with sqlite3.connect('database.db', timeout=10) as conn:
                     c = conn.cursor()
-                c.execute("SELECT file_hash, doc_id FROM documents WHERE doc_id = ?", (metadata_doc_id,))
+                c.execute("SELECT file_hash, doc_id FROM documents WHERE doc_id = ?", (stego_doc_id,))
                 result = c.fetchone()
                 
                 # ==========================================
                                 
-                # ===== CEK IDENTITAS DOKUMEN =====
-                if stego_user or stego_doc_id:
-                    message = "Dokumen dikenali melalui steganografi"
-                    status_msg = "success"
+                # ===== CEK DOKUMEN BERDASARKAN STEGO =====
+                if stego_doc_id:
 
-                elif not metadata_doc_id:
-                    message = "Dokumen tidak memiliki identitas (bukan dari sistem)"
-                    status_msg = "danger"
-
-                else:
-                    # ===== AMBIL TEKS ASLI DARI DB =====
+                    # Ambil teks dari DB
                     with sqlite3.connect('database.db', timeout=10) as conn:
                         c = conn.cursor()
-                    c.execute("SELECT content FROM documents WHERE doc_id = ?", (metadata_doc_id,))
-                    db_result = c.fetchone()
-                    
+                        c.execute("SELECT content FROM documents WHERE doc_id = ?", (stego_doc_id,))
+                        db_result = c.fetchone()
 
                     original_text = db_result[0] if db_result else ""
                     current_text = extract_text_from_pdf(filepath)
 
-                    # ===== PERBANDINGAN SEDERHANA =====
                     score = similarity(original_text, current_text)
 
                     print("DEBUG SIMILARITY:", score)
 
                     if score > 0.95:
-                        message = f"Dokumen tidak mengalami perubahan ({round(score*100,2)}%)"
+                        message = f"Dokumen ASLI ({round(score*100,2)}%)"
                         status_msg = "success"
 
                     elif score > 0.7:
@@ -748,13 +739,17 @@ def verify_file():
                         message = f"Dokumen mengalami perubahan signifikan ({round(score*100,2)}%)"
                         status_msg = "danger"
 
+                else:
+                    message = "Dokumen tidak memiliki identitas (bukan dari sistem)"
+                    status_msg = "danger"
+
                 return render_template(
                     'verify.html',
                     message=message,
                     status=status_msg,
                     doc_id=metadata_doc_id,
-                    timestamp=hidden_data.get("timestamp") if hidden_data else None,
-                    metadata_status="Valid" if metadata_valid else "Tidak Valid",
+                    timestamp = stego_time if stego_time else "-",
+                    metadata_status="Valid" if metadata_valid else "Tidak Dijadikan Acuan",
                     stego_message=stego_message,
                     author=author,
                     creator=creator,
