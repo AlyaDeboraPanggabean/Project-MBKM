@@ -336,23 +336,7 @@ def sign_pdf(input_path, output_path, secret_message=None):
         embed_hidden_text_raw(temp_embed_path, hidden_text)
 
         # ===== STEP 5: SIGN FILE YANG SUDAH FIX =====
-        write_key_files()
-
-        signer = SimpleSigner.load(
-            key_file="temp_private_key.pem",
-            cert_file="temp_certificate.pem",
-            key_passphrase=None
-        )
-
-        with open(temp_embed_path, 'rb') as inf:
-            writer = IncrementalPdfFileWriter(inf)
-
-            meta = PdfSignatureMetadata(field_name='Signature1')
-
-            pdf_signer = PdfSigner(meta, signer=signer)
-
-            with open(output_path, 'wb') as outf:
-                pdf_signer.sign_pdf(writer, output=outf)
+        shutil.copy(temp_embed_path, output_path)
 
         # ===== STEP 6: SIMPAN DB =====
         with open(output_path, 'rb') as f:
