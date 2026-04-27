@@ -629,6 +629,10 @@ def verify_file():
                 hidden_data = metadata_all.get("hidden") if metadata_all else None
 
                 metadata_doc_id = None
+                
+                stego_doc_id = None
+                stego_user = None
+                stego_time = None
 
                 author = metadata_all.get("author") if metadata_all else None
                 creator = metadata_all.get("creator") if metadata_all else None
