@@ -113,6 +113,21 @@
         <p><strong>Producer:</strong> {{ producer or "-" }}</p>
     </div>
 
+    <!-- DETAIL PERUBAHAN -->
+    <div class="card p-4 mb-4">
+        <h5 class="section-title">🧩 Detail Perubahan</h5>
+
+        {% if diff_changes %}
+            <pre>
+    {% for c in diff_changes %}
+    {{ c }}
+    {% endfor %}
+            </pre>
+        {% else %}
+            <p>Tidak ada perubahan detail</p>
+        {% endif %}
+    </div>
+
     <!-- STEGO -->
     <div class="card p-4 mb-4">
         <h5 class="section-title">🕵️ Steganografi</h5>

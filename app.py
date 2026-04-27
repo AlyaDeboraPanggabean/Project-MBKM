@@ -9,6 +9,8 @@ import shutil
 
 import fitz
 
+import difflib
+
 from difflib import SequenceMatcher
 
 from cryptography.x509.oid import NameOID
@@ -97,6 +99,19 @@ def decrypt_message(encrypted_message):
 # =========================
 def similarity(a, b):
     return SequenceMatcher(None, a, b).ratio()
+
+def get_diff(original_text, current_text):
+    diff = difflib.ndiff(
+        original_text.splitlines(),
+        current_text.splitlines()
+    )
+
+    changes = []
+    for line in diff:
+        if line.startswith("+ ") or line.startswith("- "):
+            changes.append(line)
+
+    return changes[:10]  # batasi biar gak panjang
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -724,11 +739,15 @@ def verify_file():
                     similarity_percent = round(score * 100, 2)
                     change_percent = round(100 - similarity_percent, 2)
 
-                    if score > 0.95:
-                        message = f"Dokumen ASLI | Kemiripan {similarity_percent}% | Perubahan {change_percent}%"
+                    if similarity_percent == 100:
+                        message = f"Dokumen IDENTIK | Kemiripan {similarity_percent}% | Perubahan {change_percent}%"
                         status_msg = "success"
 
-                    elif score > 0.7:
+                    elif similarity_percent >= 95:
+                        message = f"Dokumen hampir identik | Kemiripan {similarity_percent}% | Perubahan {change_percent}%"
+                        status_msg = "success"
+
+                    elif similarity_percent >= 70:
                         message = f"Dokumen mengalami sedikit perubahan | Kemiripan {similarity_percent}% | Perubahan {change_percent}%"
                         status_msg = "warning"
 
@@ -752,7 +771,8 @@ def verify_file():
                     creator=creator,
                     producer=producer,
                     original_owner=stego_user,
-                    is_from_stego=True if stego_user else False
+                    is_from_stego=True if stego_user else False,
+                    diff_changes = get_diff(original_text, current_text)
                 )
 
                 return response
