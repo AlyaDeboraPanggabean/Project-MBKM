@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, url_for, send_file
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlite3
 import os
 import hashlib  
@@ -290,7 +290,9 @@ def sign_pdf(input_path, output_path, secret_message=None):
             file_data = f.read()
             initial_hash = hashlib.sha256(file_data).hexdigest()
 
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        from datetime import datetime, timedelta
+
+        timestamp = (datetime.utcnow() + timedelta(hours=7)).strftime("%Y-%m-%d %H:%M:%S")
         data_string = initial_hash + timestamp
         metadata_signature = sign_metadata(data_string)
 

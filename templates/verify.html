@@ -53,7 +53,7 @@
         <a href="/upload" class="btn btn-light btn-sm me-2">Upload</a>
         <a href="/documents" class="btn btn-light btn-sm me-2">Dokumen</a>
         <a href="/verify" class="btn btn-light btn-sm me-2">Verify</a>
-        <a href="/logout" class="btn btn-danger btn-sm">Logout</a>
+        <a href="/logout" class="btn btn-warning btn-sm">Logout</a>
     </div>
 </nav>
 
@@ -118,9 +118,9 @@
         <h5 class="section-title">🕵️ Steganografi</h5>
 
         {% if stego_message %}
-            <pre>{{ stego_message }}</pre>
+            <p class="text-success">Identitas tersembunyi berhasil terdeteksi.</p>
         {% else %}
-            <p>Tidak ada data tersembunyi</p>
+            <p class="text-danger">Tidak ada data tersembunyi.</p>
         {% endif %}
     </div>
 
