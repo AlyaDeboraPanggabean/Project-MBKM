@@ -718,12 +718,13 @@ def verify_file():
                 c.execute("SELECT file_hash, doc_id FROM documents WHERE doc_id = ?", (stego_doc_id,))
                 result = c.fetchone()
                 
-                # ==========================================
-                                
-                # ===== CEK DOKUMEN BERDASARKAN STEGO =====
+                # ===============================
+                # LOGIC UTAMA
+                # ===============================
+
                 if stego_doc_id:
 
-                    # Ambil teks dari DB
+                    # ambil teks asli dari DB
                     with sqlite3.connect('database.db', timeout=10) as conn:
                         c = conn.cursor()
                         c.execute("SELECT content FROM documents WHERE doc_id = ?", (stego_doc_id,))
@@ -736,36 +737,29 @@ def verify_file():
 
                     print("DEBUG SIMILARITY:", score)
 
-                    similarity_percent = round(score * 100, 2)
-                    change_percent = round(100 - similarity_percent, 2)
-
-                    if similarity_percent == 100:
-                        message = f"Dokumen IDENTIK | Kemiripan {similarity_percent}% | Perubahan {change_percent}%"
+                    if score > 0.95:
+                        message = "Dokumen ASLI dan dapat dilacak"
                         status_msg = "success"
 
-                    elif similarity_percent >= 95:
-                        message = f"Dokumen hampir identik | Kemiripan {similarity_percent}% | Perubahan {change_percent}%"
-                        status_msg = "success"
-
-                    elif similarity_percent >= 70:
-                        message = f"Dokumen mengalami sedikit perubahan | Kemiripan {similarity_percent}% | Perubahan {change_percent}%"
+                    elif score > 0.7:
+                        message = "Dokumen mengalami perubahan, tetapi masih dapat dilacak (indikasi penyebaran)"
                         status_msg = "warning"
 
                     else:
-                        message = f"Dokumen mengalami perubahan signifikan | Kemiripan {similarity_percent}% | Perubahan {change_percent}%"
+                        message = "Dokumen mengalami perubahan signifikan, namun masih memiliki jejak steganografi"
                         status_msg = "danger"
 
                 else:
-                    message = "Dokumen tidak memiliki identitas (bukan dari sistem)"
+                    message = "Dokumen tidak memiliki identitas (kemungkinan bukan dari sistem atau sudah dimodifikasi)"
                     status_msg = "danger"
 
                 return render_template(
                     'verify.html',
                     message=message,
                     status=status_msg,
-                    doc_id=metadata_doc_id,
-                    timestamp = stego_time if stego_time else "-",
-                    metadata_status="Valid" if metadata_valid else "Tidak Dijadikan Acuan",
+                    doc_id=stego_doc_id,
+                    timestamp = stego_time,
+                    metadata_status="Tidak Dijadikan Acuan",
                     stego_message=stego_message,
                     author=author,
                     creator=creator,
