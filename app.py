@@ -737,17 +737,21 @@ def verify_file():
 
                     print("DEBUG SIMILARITY:", score)
 
-                    if score > 0.95:
-                        message = "Dokumen ASLI dan dapat dilacak"
+                    has_difference = original_text.strip() != current_text.strip()
+
+                    if not has_difference:
+                        message = "Dokumen tidak mengalami perubahan"
                         status_msg = "success"
 
-                    elif score > 0.7:
-                        message = "Dokumen mengalami perubahan, tetapi masih dapat dilacak (indikasi penyebaran)"
+                    elif score > 0.9:
+                        message = "Dokumen mengalami perubahan kecil, tetapi masih dapat dilacak (indikasi penyebaran)"
                         status_msg = "warning"
 
                     else:
                         message = "Dokumen mengalami perubahan signifikan, namun masih memiliki jejak steganografi"
                         status_msg = "danger"
+
+                    message += f" ({round(score*100,2)}%)"
 
                 else:
                     message = "Dokumen tidak memiliki identitas (kemungkinan bukan dari sistem atau sudah dimodifikasi)"
@@ -759,7 +763,7 @@ def verify_file():
                     status=status_msg,
                     doc_id=stego_doc_id,
                     timestamp = stego_time,
-                    metadata_status="Tidak Dijadikan Acuan",
+                    # metadata_status="Tidak Dijadikan Acuan",
                     stego_message=stego_message,
                     author=author,
                     creator=creator,
