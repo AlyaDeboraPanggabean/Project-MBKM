@@ -119,9 +119,9 @@
 
         {% if diff_changes %}
             <pre>
-    {% for c in diff_changes %}
-    {{ c }}
-    {% endfor %}
+                {% for c in diff_changes %}
+                {{ c }}
+                {% endfor %}
             </pre>
         {% else %}
             <p>Tidak ada perubahan detail</p>
