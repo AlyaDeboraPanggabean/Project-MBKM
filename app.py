@@ -735,6 +735,52 @@ def verify_file():
 
                     score = similarity(original_text, current_text)
 
+                    from difflib import ndiff
+
+                    diff = list(ndiff(original_text.split(), current_text.split()))
+
+                    added = []
+                    removed = []
+
+                    for d in diff:
+                        if d.startswith('+ '):
+                            added.append(d[2:])
+                        elif d.startswith('- '):
+                            removed.append(d[2:])
+
+                    detail_changes = ""
+
+                    if added:
+                        detail_changes += "Penambahan:\n"
+                        for a in added[:10]:
+                            detail_changes += f"+ {a}\n"
+
+                    if removed:
+                        detail_changes += "\nPenghapusan:\n"
+                        for r in removed[:10]:
+                            detail_changes += f"- {r}\n"
+
+                    # ===== TAMBAHAN UNTUK "DIMANA PERUBAHANNYA" =====
+                    context_snippets = []
+
+                    for d in diff:
+                        if d.startswith('+ '):
+                            word = d[2:]
+                            if word in current_text:
+                                idx = current_text.find(word)
+                                start = max(0, idx - 30)
+                                end = min(len(current_text), idx + 30)
+                                snippet = current_text[start:end]
+                                context_snippets.append(snippet)
+
+                    if context_snippets:
+                        detail_changes += "\n📍 Ditemukan di sekitar:\n"
+                        for c in context_snippets[:3]:
+                            detail_changes += f"...{c}...\n"
+
+                    if not detail_changes:
+                        detail_changes = "Tidak ada perubahan detail"
+
                     print("DEBUG SIMILARITY:", score)
 
                     has_difference = original_text.strip() != current_text.strip()
@@ -763,14 +809,15 @@ def verify_file():
                     status=status_msg,
                     doc_id=stego_doc_id,
                     timestamp = stego_time,
-                    # metadata_status="Tidak Dijadikan Acuan",
+                    metadata_status="Tidak Dijadikan Acuan",
                     stego_message=stego_message,
                     author=author,
                     creator=creator,
                     producer=producer,
                     original_owner=stego_user,
                     is_from_stego=True if stego_user else False,
-                    diff_changes = get_diff(original_text, current_text)
+                    diff_changes = get_diff(original_text, current_text),
+                    detail_changes=detail_changes
                 )
 
                 return response

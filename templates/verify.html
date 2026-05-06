@@ -118,11 +118,7 @@
         <h5 class="section-title">🧩 Detail Perubahan</h5>
 
         {% if diff_changes %}
-            <pre>
-                {% for c in diff_changes %}
-                {{ c }}
-                {% endfor %}
-            </pre>
+             <pre>{{ detail_changes }}</pre>
         {% else %}
             <p>Tidak ada perubahan detail</p>
         {% endif %}
