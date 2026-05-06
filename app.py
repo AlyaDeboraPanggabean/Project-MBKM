@@ -762,16 +762,16 @@ def verify_file():
 
                     # ===== TAMBAHAN UNTUK "DIMANA PERUBAHANNYA" =====
                     context_snippets = []
-
                     for d in diff:
                         if d.startswith('+ '):
                             word = d[2:]
-                            if word in current_text:
-                                idx = current_text.find(word)
-                                start = max(0, idx - 30)
-                                end = min(len(current_text), idx + 30)
-                                snippet = current_text[start:end]
-                                context_snippets.append(snippet)
+
+                            lines = current_text.split('\n')
+
+                            for line in lines:
+                                if word in line:
+                                    context_snippets.append(line.strip())
+                                    break
 
                     if context_snippets:
                         detail_changes += "\n📍 Ditemukan di sekitar:\n"
