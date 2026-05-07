@@ -777,17 +777,18 @@ def verify_file():
                     # ===== TAMBAHAN UNTUK "DIMANA PERUBAHANNYA" =====
                     context_snippets = []
 
-                    for a in added[:5]:
+                    for added_item in added[:5]:
 
                         for line in current_text.splitlines():
 
                             clean_line = line.strip()
 
-                            if a.lower() in clean_line.lower():
+                            if added_item.lower() in clean_line.lower():
 
                                 if clean_line not in context_snippets:
+
                                     context_snippets.append(
-                                        f'"{item}" ditemukan di dekat: "{clean_line}"'
+                                        f'"{added_item}" ditemukan di dekat: "{clean_line}"'
                                     )
 
                                 break
