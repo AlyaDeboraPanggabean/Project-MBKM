@@ -808,30 +808,31 @@ def verify_file():
                     # ===== TAMBAHAN UNTUK "DIMANA PERUBAHANNYA" =====
                     context_snippets = []
 
-                    keywords = [
-                        "LEMBAR PRAKTIKUM",
-                        "ANALISIS PAKET DATA",
-                        "WIRESHARK"
-                    ]
-
                     for item in added[:5]:
 
                         found_context = False
 
-                        for line in current_lines:
+                        for i, line in enumerate(current_lines):
 
-                            for keyword in keywords:
+                            if item.lower() in line.lower():
 
-                                if keyword.lower() in line.lower():
+                                # ambil line sebelum & sesudah
+                                before = current_lines[i - 1] if i > 0 else ""
+                                after = current_lines[i + 1] if i < len(current_lines)-1 else ""
 
-                                    context_snippets.append(
-                                        f'"{item}" muncul di dekat "{keyword}"'
-                                    )
+                                context = f'''
+                    "{item}"
 
-                                    found_context = True
-                                    break
+                    muncul di sekitar:
 
-                            if found_context:
+                    {before}
+                    {line}
+                    {after}
+                    '''.strip()
+
+                                context_snippets.append(context)
+
+                                found_context = True
                                 break
 
                     if context_snippets:
