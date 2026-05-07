@@ -730,14 +730,17 @@ def verify_file():
                         c.execute("SELECT content FROM documents WHERE doc_id = ?", (stego_doc_id,))
                         db_result = c.fetchone()
 
-                    original_text = db_result[0] if db_result else ""
-                    current_text = extract_text_from_pdf(filepath)
+                    original_text = normalize_text(db_result[0] if db_result else "")
+                    current_text = normalize_text(extract_text_from_pdf(filepath))
 
                     score = similarity(original_text, current_text)
 
                     from difflib import ndiff
 
-                    diff = list(ndiff(original_text.split(), current_text.split()))
+                    diff = list(ndiff(
+                        original_text.split('.'),
+                        current_text.split('.')
+                    ))
 
                     added = []
                     removed = []
@@ -835,6 +838,9 @@ def verify_file():
                     os.remove(filepath)
                     
     return render_template('verify.html')
+
+def normalize_text(text):
+    return " ".join(text.split())
 
 def extract_stego_from_text(pdf_path):
     try:
