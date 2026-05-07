@@ -786,7 +786,9 @@ def verify_file():
                             if a.lower() in clean_line.lower():
 
                                 if clean_line not in context_snippets:
-                                    context_snippets.append(clean_line)
+                                    context_snippets.append(
+                                        f'"{item}" ditemukan di dekat: "{clean_line}"'
+                                    )
 
                                 break
 
