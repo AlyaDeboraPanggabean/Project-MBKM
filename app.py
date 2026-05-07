@@ -11,6 +11,8 @@ import fitz
 
 import difflib
 
+import re
+
 from difflib import SequenceMatcher
 
 from cryptography.x509.oid import NameOID
@@ -730,76 +732,113 @@ def verify_file():
                         c.execute("SELECT content FROM documents WHERE doc_id = ?", (stego_doc_id,))
                         db_result = c.fetchone()
 
-                    original_text = normalize_text(db_result[0] if db_result else "")
-                    current_text = normalize_text(extract_text_from_pdf(filepath))
+                    original_text = db_result[0] if db_result else ""
+                    current_text = extract_text_from_pdf(filepath)
 
                     score = similarity(original_text, current_text)
 
-                    from difflib import ndiff
+                    # from difflib import ndiff
 
-                    diff = list(ndiff(
-                        original_text.splitlines(),
-                        current_text.splitlines()
-                    ))
+                    # diff = list(ndiff(
+                    #     original_text.splitlines(),
+                    #     current_text.splitlines()
+                    # ))
+
+                    # added = []
+                    # removed = []
+
+                    # for d in diff:
+                    #     line = d[2:].strip()
+
+                    #     # skip kalau kosong
+                    #     if not line:
+                    #         continue
+
+                    #     # skip kalau terlalu pendek
+                    #     if len(line) < 5:
+                    #         continue
+
+                    #     if d.startswith('+ '):
+                    #         added.append(line)
+
+                    #     elif d.startswith('- '):
+                    #         removed.append(line)
+
+                    original_lines = clean_lines(original_text)
+                    current_lines = clean_lines(current_text)
+
+                    diff = list(difflib.ndiff(original_lines, current_lines))
 
                     added = []
                     removed = []
 
                     for d in diff:
+
                         line = d[2:].strip()
 
-                        # skip kalau kosong
                         if not line:
                             continue
 
-                        # skip kalau terlalu pendek
-                        if len(line) < 5:
-                            continue
-
-                        if d.startswith('+ '):
+                        if d.startswith("+ "):
                             added.append(line)
 
-                        elif d.startswith('- '):
+                        elif d.startswith("- "):
                             removed.append(line)
 
                     detail_changes = ""
 
                     if added:
                         detail_changes += "Penambahan:\n"
-                        for a in added[:10]:
+
+                        for a in added[:5]:
                             detail_changes += f"+ {a}\n"
+
+                    else:
+                        detail_changes += "Penambahan:\nTidak ada\n"
 
                     if removed:
                         detail_changes += "\nPenghapusan:\n"
-                        for r in removed[:10]:
+
+                        for r in removed[:5]:
                             detail_changes += f"- {r}\n"
+
+                    else:
+                        detail_changes += "\nPenghapusan:\nTidak ada\n"
 
                     # ===== TAMBAHAN UNTUK "DIMANA PERUBAHANNYA" =====
                     context_snippets = []
 
-                    for added_item in added[:5]:
+                    keywords = [
+                        "LEMBAR PRAKTIKUM",
+                        "ANALISIS PAKET DATA",
+                        "WIRESHARK"
+                    ]
 
-                        for line in current_text.splitlines():
+                    for item in added[:5]:
 
-                            clean_line = line.strip()
+                        found_context = False
 
-                            if added_item.lower() in clean_line.lower():
+                        for line in current_lines:
 
-                                if clean_line not in context_snippets:
+                            for keyword in keywords:
+
+                                if keyword.lower() in line.lower():
 
                                     context_snippets.append(
-                                        f'"{added_item}" ditemukan di dekat: "{clean_line}"'
+                                        f'"{item}" muncul di dekat "{keyword}"'
                                     )
 
+                                    found_context = True
+                                    break
+
+                            if found_context:
                                 break
 
                     if context_snippets:
-                        detail_changes += "\n📍 Ditemukan di sekitar:\n"
-                        for c in context_snippets[:3]:
-                            detail_changes += f"...{c}...\n"
+                        detail_changes += "\n📍 Terjadi di sekitar:\n"
 
-                    if not detail_changes:
-                        detail_changes = "Tidak ada perubahan detail"
+                        for c in context_snippets[:3]:
+                            detail_changes += f"- {c}\n"
 
                     print("DEBUG SIMILARITY:", score)
 
@@ -858,6 +897,20 @@ def verify_file():
 
 def normalize_text(text):
     return " ".join(text.split())
+
+def clean_lines(text):
+    lines = []
+
+    for line in text.splitlines():
+
+        line = re.sub(r'\s+', ' ', line).strip()
+
+        if len(line) < 3:
+            continue
+
+        lines.append(line)
+
+    return lines
 
 def extract_stego_from_text(pdf_path):
     try:
