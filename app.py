@@ -738,18 +738,29 @@ def verify_file():
                     from difflib import ndiff
 
                     diff = list(ndiff(
-                        original_text.split('.'),
-                        current_text.split('.')
+                        original_text.splitlines(),
+                        current_text.splitlines()
                     ))
 
                     added = []
                     removed = []
 
                     for d in diff:
+                        line = d[2:].strip()
+
+                        # skip kalau kosong
+                        if not line:
+                            continue
+
+                        # skip kalau terlalu pendek
+                        if len(line) < 5:
+                            continue
+
                         if d.startswith('+ '):
-                            added.append(d[2:])
+                            added.append(line)
+
                         elif d.startswith('- '):
-                            removed.append(d[2:])
+                            removed.append(line)
 
                     detail_changes = ""
 
@@ -765,22 +776,19 @@ def verify_file():
 
                     # ===== TAMBAHAN UNTUK "DIMANA PERUBAHANNYA" =====
                     context_snippets = []
-                    for d in diff:
-                        if d.startswith('+ '):
-                            word = d[2:]
 
-                            lines = current_text.split('\n')
+                    for a in added[:5]:
 
-                            for line in lines:
-                                clean_line = line.strip()
-                                if word.lower() in clean_line.lower():
+                        for line in current_text.splitlines():
 
-                                    # filter biar gak terlalu panjang
-                                    if len(clean_line) < 150:
+                            clean_line = line.strip()
 
-                                        context_snippets.append(clean_line)
+                            if a.lower() in clean_line.lower():
 
-                                    break
+                                if clean_line not in context_snippets:
+                                    context_snippets.append(clean_line)
+
+                                break
 
                     if context_snippets:
                         detail_changes += "\n📍 Ditemukan di sekitar:\n"
