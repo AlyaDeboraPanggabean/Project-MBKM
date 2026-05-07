@@ -772,8 +772,14 @@ def verify_file():
                             lines = current_text.split('\n')
 
                             for line in lines:
-                                if word in line:
-                                    context_snippets.append(line.strip())
+                                clean_line = line.strip()
+                                if word.lower() in clean_line.lower():
+
+                                    # filter biar gak terlalu panjang
+                                    if len(clean_line) < 150:
+
+                                        context_snippets.append(clean_line)
+
                                     break
 
                     if context_snippets:
