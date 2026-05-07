@@ -392,10 +392,22 @@ def sign_pdf(input_path, output_path, secret_message=None):
 def extract_text_from_pdf(pdf_path):
     try:
         doc = fitz.open(pdf_path)
+
         full_text = ""
 
         for page in doc:
-            full_text += page.get_text()
+
+            blocks = page.get_text("blocks")
+
+            # urut berdasarkan posisi Y lalu X
+            blocks = sorted(blocks, key=lambda b: (b[1], b[0]))
+
+            for block in blocks:
+
+                text = block[4].strip()
+
+                if text:
+                    full_text += text + "\n"
 
         return full_text
 
