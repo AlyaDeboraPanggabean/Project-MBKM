@@ -105,12 +105,55 @@
 
     <!-- METADATA -->
     <div class="card p-4 mb-4">
-        <h5 class="section-title">🧾 Metadata</h5>
+        <h5 class="section-title">📄 Identitas Dokumen</h5>
 
-        <p><strong>Status:</strong> {{ metadata_status }}</p>
-        <p><strong>Author:</strong> {{ author or "-" }}</p>
-        <p><strong>Creator:</strong> {{ creator or "-" }}</p>
-        <p><strong>Producer:</strong> {{ producer or "-" }}</p>
+        <p>
+            <strong>Status Metadata:</strong><br>
+
+            {% if metadata_status %}
+                <span class="badge bg-success">
+                    Metadata terenkripsi dan berhasil diverifikasi
+                </span>
+            {% else %}
+                <span class="badge bg-danger">
+                    Metadata tidak valid
+                </span>
+            {% endif %}
+        </p>
+
+        <p>
+            <strong>Status Integritas:</strong><br>
+
+            {% if status == "success" %}
+                <span class="badge bg-success">
+                    Dokumen asli
+                </span>
+
+            {% elif status == "warning" %}
+                <span class="badge bg-warning text-dark">
+                    Perubahan minor terdeteksi
+                </span>
+
+            {% else %}
+                <span class="badge bg-danger">
+                    Perubahan signifikan terdeteksi
+                </span>
+            {% endif %}
+        </p>
+
+        <p>
+            <strong>Sumber Dokumen:</strong><br>
+
+            {% if is_from_stego %}
+                <span class="badge bg-primary">
+                    Dokumen berasal dari sistem
+                </span>
+            {% else %}
+                <span class="badge bg-danger">
+                    Dokumen tidak dikenali
+                </span>
+            {% endif %}
+        </p>
     </div>
 
     <!-- DETAIL PERUBAHAN -->
