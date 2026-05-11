@@ -422,6 +422,28 @@ def extract_text_from_pdf(pdf_path):
     except Exception as e:
         print("Error extract text:", e)
         return ""
+
+def extract_text_with_ocr(pdf_path):
+
+    try:
+
+        images = convert_from_path(pdf_path)
+
+        ocr_text = ""
+
+        for image in images:
+
+            text = pytesseract.image_to_string(image)
+
+            ocr_text += text + "\n"
+
+        return ocr_text
+
+    except Exception as e:
+
+        print("OCR ERROR:", e)
+
+        return ""
     
 def find_text_location(pdf_path, target_text):
 
