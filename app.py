@@ -869,41 +869,31 @@ def verify_file():
                     else:
                         detail_changes += "\nPenghapusan:\nTidak ada\n"
 
-                    # ===== TAMBAHAN UNTUK "DIMANA PERUBAHANNYA" =====
-                    context_snippets = []
+                    # ===== DETEKSI LOKASI PERUBAHAN =====
+                    location_infos = []
 
-                    for item in added[:5]:
+                    for added_item in added[:5]:
 
-                        found_context = False
+                        location = find_text_location(filepath, added_item)
 
-                        for i, line in enumerate(current_lines):
+                        if location:
 
-                            if item.lower() in line.lower():
+                            info_text = (
+                                f'- Halaman {location["page"]} '
+                                f'{location["area"]}\n'
+                                f'  Dekat:\n'
+                                f'  "{location["near"]}"'
+                            )
 
-                                # ambil line sebelum & sesudah
-                                before = current_lines[i - 1] if i > 0 else ""
-                                after = current_lines[i + 1] if i < len(current_lines)-1 else ""
+                            if info_text not in location_infos:
+                                location_infos.append(info_text)
 
-                                context = f'''
-                    "{item}"
+                    if location_infos:
 
-                    muncul di sekitar:
+                        detail_changes += "\n📍 Terjadi di:\n"
 
-                    {before}
-                    {line}
-                    {after}
-                    '''.strip()
-
-                                context_snippets.append(context)
-
-                                found_context = True
-                                break
-
-                    if context_snippets:
-                        detail_changes += "\n📍 Terjadi di sekitar:\n"
-
-                        for c in context_snippets[:3]:
-                            detail_changes += f"- {c}\n"
+                        for loc in location_infos:
+                            detail_changes += f"{loc}\n\n"
 
                     print("DEBUG SIMILARITY:", score)
 
