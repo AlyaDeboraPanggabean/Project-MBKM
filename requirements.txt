@@ -7,3 +7,6 @@ reportlab
 python-dotenv
 gunicorn
 PyMuPDF
+pytesseract
+pdf2image
+Pillow
