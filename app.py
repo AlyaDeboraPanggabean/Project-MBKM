@@ -54,6 +54,12 @@ from dotenv import load_dotenv
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
+import pytesseract
+
+from pdf2image import convert_from_path
+
+from PIL import Image
+
 env_path = os.path.join(os.getcwd(), '.env')
 load_dotenv(env_path)
 
