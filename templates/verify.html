@@ -172,9 +172,33 @@
         <h5 class="section-title">🕵️ Steganografi</h5>
 
         {% if stego_message %}
-            <p class="text-success">Identitas tersembunyi berhasil terdeteksi.</p>
+
+            <div class="alert alert-success">
+                Identitas tersembunyi berhasil terdeteksi
+            </div>
+
+            <p>
+                <strong>Metode:</strong><br>
+                Raw PDF Append Steganography
+            </p>
+
+            <p>
+                <strong>Lokasi:</strong><br>
+                Bagian akhir file PDF
+            </p>
+
+            <p>
+                <strong>Marker:</strong><br>
+                <code>%%STEGO_START%%</code><br>
+                <code>%%STEGO_END%%</code>
+            </p>
+
         {% else %}
-            <p class="text-danger">Tidak ada data tersembunyi.</p>
+
+            <div class="alert alert-danger">
+                Tidak ada data steganografi ditemukan
+            </div>
+
         {% endif %}
     </div>
 
