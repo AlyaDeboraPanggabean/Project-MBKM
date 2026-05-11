@@ -134,6 +134,8 @@ def embed_metadata(pdf_path, data_dict, secret_message=None):
         if secret_message:
             data_dict["secret"] = secret_message
 
+        encrypted_metadata = encrypt_message(json.dumps(data_dict))
+
         metadata.update({
             "/HiddenData": json.dumps(data_dict)
         })
@@ -428,7 +430,16 @@ def extract_metadata(pdf_path):
             result["producer"] = metadata.get("/Producer")
 
             if "/HiddenData" in metadata:
-                result["hidden"] = json.loads(metadata["/HiddenData"])
+
+                encrypted_data = metadata["/HiddenData"]
+
+                try:
+                    decrypted_data = decrypt_message(encrypted_data)
+                    result["hidden"] = json.loads(decrypted_data)
+
+                except Exception as e:
+                    print("Metadata decrypt error:", e)
+                    result["hidden"] = None
 
         return result
 
