@@ -416,6 +416,47 @@ def extract_text_from_pdf(pdf_path):
     except Exception as e:
         print("Error extract text:", e)
         return ""
+    
+def find_text_location(pdf_path, target_text):
+
+    try:
+        doc = fitz.open(pdf_path)
+
+        for page_num, page in enumerate(doc):
+
+            blocks = page.get_text("blocks")
+
+            for block in blocks:
+
+                block_text = block[4].strip()
+
+                if not block_text:
+                    continue
+
+                if target_text.lower() in block_text.lower():
+
+                    y_position = block[1]
+
+                    if y_position < 200:
+                        area = "bagian atas"
+                    elif y_position < 500:
+                        area = "bagian tengah"
+                    else:
+                        area = "bagian bawah"
+
+                    short_text = block_text[:120]
+
+                    return {
+                        "page": page_num + 1,
+                        "area": area,
+                        "near": short_text
+                    }
+
+        return None
+
+    except Exception as e:
+        print("Location detect error:", e)
+        return None
 
 def extract_metadata(pdf_path):
     try:
