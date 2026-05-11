@@ -398,52 +398,32 @@ def sign_pdf(input_path, output_path, secret_message=None):
         return False
     
 def extract_text_from_pdf(pdf_path):
+
     try:
+
         doc = fitz.open(pdf_path)
 
         full_text = ""
 
         for page in doc:
 
-            blocks = page.get_text("blocks")
+            full_text += page.get_text()
 
-            # urut berdasarkan posisi Y lalu X
-            blocks = sorted(blocks, key=lambda b: (b[1], b[0]))
+        # ===== FALLBACK OCR =====
+        if len(full_text.strip()) < 30:
 
-            for block in blocks:
+            print("TEXT MINIMAL -> OCR FALLBACK AKTIF")
 
-                text = block[4].strip()
-
-                if text:
-                    full_text += text + "\n"
+            full_text = extract_text_with_ocr(pdf_path)
 
         return full_text
 
     except Exception as e:
+
         print("Error extract text:", e)
-        return ""
 
-def extract_text_with_ocr(pdf_path):
-
-    try:
-
-        images = convert_from_path(pdf_path)
-
-        ocr_text = ""
-
-        for image in images:
-
-            text = pytesseract.image_to_string(image)
-
-            ocr_text += text + "\n"
-
-        return ocr_text
-
-    except Exception as e:
-
-        print("OCR ERROR:", e)
-
-        return ""
+        # kalau fitz gagal total
+        return extract_text_with_ocr(pdf_path)
     
 def find_text_location(pdf_path, target_text):
 
