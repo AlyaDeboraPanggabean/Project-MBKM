@@ -426,30 +426,53 @@ def find_text_location(pdf_path, target_text):
 
             blocks = page.get_text("blocks")
 
-            for block in blocks:
+            for i, block in enumerate(blocks):
 
-                block_text = block[4].strip()
+                text = block[4].strip()
 
-                if not block_text:
+                if not text:
                     continue
 
-                if target_text.lower() in block_text.lower():
+                if target_text.lower() in text.lower():
 
-                    y_position = block[1]
+                    x0, y0, x1, y1 = block[:4]
 
-                    if y_position < 200:
+                    page_height = page.rect.height
+
+                    # tentukan area halaman
+                    if y0 < page_height * 0.33:
                         area = "bagian atas"
-                    elif y_position < 500:
+
+                    elif y0 < page_height * 0.66:
                         area = "bagian tengah"
+
                     else:
                         area = "bagian bawah"
 
-                    short_text = block_text[:120]
+                    # ===== CARI KONTEXT SEKITAR =====
+                    near_text = text
+
+                    # coba ambil block sebelum
+                    if i > 0:
+
+                        prev_text = blocks[i - 1][4].strip()
+
+                        if len(prev_text) > 10:
+                            near_text = prev_text
+
+                    # kalau block sebelumnya jelek,
+                    # ambil block sesudah
+                    if len(near_text) < 10 and i + 1 < len(blocks):
+
+                        next_text = blocks[i + 1][4].strip()
+
+                        if len(next_text) > 10:
+                            near_text = next_text
 
                     return {
                         "page": page_num + 1,
                         "area": area,
-                        "near": short_text
+                        "near": near_text[:120]
                     }
 
         return None
