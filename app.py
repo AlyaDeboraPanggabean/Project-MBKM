@@ -435,7 +435,7 @@ def extract_text_with_ocr(pdf_path):
 
         for img in images:
 
-            text = pytesseract.image_to_string(img, lang='eng')
+            text = pytesseract.image_to_string(img, lang='eng', timeout=10)
 
             ocr_text += text + "\n"
 
