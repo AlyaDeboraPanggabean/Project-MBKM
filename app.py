@@ -424,6 +424,30 @@ def extract_text_from_pdf(pdf_path):
 
         # kalau fitz gagal total
         return extract_text_with_ocr(pdf_path)
+
+def extract_text_with_ocr(pdf_path):
+
+    try:
+
+        images = convert_from_path(pdf_path)
+
+        ocr_text = ""
+
+        for img in images:
+
+            text = pytesseract.image_to_string(img, lang='eng')
+
+            ocr_text += text + "\n"
+
+        print("OCR BERHASIL DIGUNAKAN")
+
+        return ocr_text
+
+    except Exception as e:
+
+        print("OCR ERROR:", e)
+
+        return ""
     
 def find_text_location(pdf_path, target_text):
 
