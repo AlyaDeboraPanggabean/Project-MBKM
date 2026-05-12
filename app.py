@@ -411,10 +411,8 @@ def extract_text_from_pdf(pdf_path):
 
         # ===== FALLBACK OCR =====
         if len(full_text.strip()) < 30:
-
-            print("TEXT MINIMAL -> OCR FALLBACK AKTIF")
-
-            full_text = extract_text_with_ocr(pdf_path)
+            print("TEXT MINIMAL")
+            return ""
 
         return full_text
 
