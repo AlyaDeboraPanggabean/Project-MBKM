@@ -143,7 +143,7 @@ def embed_metadata(pdf_path, data_dict, secret_message=None):
         encrypted_metadata = encrypt_message(json.dumps(data_dict))
 
         metadata.update({
-            "/HiddenData": json.dumps(data_dict)
+            "/HiddenData": encrypted_metadata
         })
 
         writer.add_metadata(metadata)
