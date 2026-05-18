@@ -427,13 +427,26 @@ def extract_text_with_ocr(pdf_path):
 
     try:
 
-        images = convert_from_path(pdf_path)
+        # batasi cuma halaman pertama
+        images = convert_from_path(
+            pdf_path,
+            first_page=1,
+            last_page=1,
+            dpi=100
+        )
 
         ocr_text = ""
 
         for img in images:
 
-            text = pytesseract.image_to_string(img, lang='eng', timeout=10)
+            # resize kecil biar ringan
+            img = img.resize((800, 1000))
+
+            text = pytesseract.image_to_string(
+                img,
+                lang='eng',
+                timeout=5
+            )
 
             ocr_text += text + "\n"
 
