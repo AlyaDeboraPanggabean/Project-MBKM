@@ -887,33 +887,6 @@ def verify_file():
 
                     score = similarity(original_text, current_text)
 
-                    # from difflib import ndiff
-
-                    # diff = list(ndiff(
-                    #     original_text.splitlines(),
-                    #     current_text.splitlines()
-                    # ))
-
-                    # added = []
-                    # removed = []
-
-                    # for d in diff:
-                    #     line = d[2:].strip()
-
-                    #     # skip kalau kosong
-                    #     if not line:
-                    #         continue
-
-                    #     # skip kalau terlalu pendek
-                    #     if len(line) < 5:
-                    #         continue
-
-                    #     if d.startswith('+ '):
-                    #         added.append(line)
-
-                    #     elif d.startswith('- '):
-                    #         removed.append(line)
-
                     original_lines = clean_lines(original_text)
                     current_lines = clean_lines(current_text)
 
@@ -1007,21 +980,40 @@ def verify_file():
                     message = "Dokumen tidak memiliki identitas (kemungkinan bukan dari sistem atau sudah dimodifikasi)"
                     status_msg = "danger"
 
+                # ===== INFO STEGO =====
+                stego_method = "-"
+                stego_location = "-"
+                stego_status = "-"
+
+                if stego_text:
+                    stego_method = "Visual Ciphertext Steganography"
+                    stego_location = "Area tersembunyi dokumen PDF"
+                    stego_status = "Ciphertext terenkripsi berhasil dideteksi"
+
+                elif stego_raw:
+                    stego_method = "Encrypted Metadata Steganography"
+                    stego_location = "PDF Custom Metadata"
+                    stego_status = "Metadata terenkripsi berhasil diverifikasi"
+
                 return render_template(
                     'verify.html',
                     message=message,
                     status=status_msg,
                     doc_id=stego_doc_id,
-                    timestamp = stego_time,
-                    metadata_status="Tidak Dijadikan Acuan",
+                    timestamp=stego_time,
+                    metadata_status="Metadata terenkripsi dan berhasil diverifikasi",
                     stego_message=stego_message,
                     author=author,
                     creator=creator,
                     producer=producer,
                     original_owner=stego_user,
                     is_from_stego=True if stego_user else False,
-                    diff_changes = get_diff(original_text, current_text),
-                    detail_changes=detail_changes
+                    diff_changes=get_diff(original_text, current_text),
+                    detail_changes=detail_changes,
+
+                    stego_method=stego_method,
+                    stego_location=stego_location,
+                    stego_status=stego_status
                 )
 
                 return response

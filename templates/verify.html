@@ -177,21 +177,11 @@
                 Identitas tersembunyi berhasil terdeteksi
             </div>
 
-            <p>
-                <strong>Metode:</strong><br>
-                Raw PDF Append Steganography
-            </p>
+            <p><strong>Metode:</strong><br>{{ stego_method }}</p>
 
-            <p>
-                <strong>Lokasi:</strong><br>
-                Bagian akhir file PDF
-            </p>
+            <p><strong>Lokasi:</strong><br>{{ stego_location }}</p>
 
-            <p>
-                <strong>Marker:</strong><br>
-                <code>%%STEGO_START%%</code><br>
-                <code>%%STEGO_END%%</code>
-            </p>
+            <p><strong>Status:</strong><br>{{ stego_status }}</p>
 
         {% else %}
 
