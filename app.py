@@ -935,9 +935,9 @@ def verify_file():
 
                         location = find_text_location(filepath, added_item)
 
-                        if not location_infos and added:
+                        # if not location_infos and added:
 
-                            detail_changes += "\n📍 Lokasi perubahan sulit dideteksi karena OCR scan.\n"
+                        #     detail_changes += "\n📍 Lokasi perubahan sulit dideteksi karena OCR scan.\n"
 
                         if location:
 
