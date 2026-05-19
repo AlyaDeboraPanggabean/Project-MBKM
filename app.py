@@ -870,6 +870,9 @@ def verify_file():
                 # ===============================
                 # LOGIC UTAMA
                 # ===============================
+                original_text = ""
+                current_text = ""
+                detail_changes = "Tidak ada perubahan detail"
 
                 if stego_doc_id:
 
@@ -958,6 +961,10 @@ def verify_file():
                     for added_item in added[:5]:
 
                         location = find_text_location(filepath, added_item)
+
+                        if not location_infos and added:
+
+                            detail_changes += "\n📍 Lokasi perubahan sulit dideteksi karena OCR scan.\n"
 
                         if location:
 
@@ -1051,18 +1058,23 @@ def clean_lines(text):
     return lines
 
 def extract_stego_from_text(pdf_path):
+
     try:
+
         text = extract_text_from_pdf(pdf_path)
 
-        if "[STEGO AREA]" in text and "SECURE_DOC::" in text:
-            area_part = text.split("[STEGO AREA]")[1]
-            stego_part = area_part.split("SECURE_DOC::")[1]
-            stego_clean = stego_part.split()[0]
-            return stego_clean
+        match = re.search(
+            r"SECURE_DOC::(gAAAAA[a-zA-Z0-9_\-=]+)",
+            text
+        )
+
+        if match:
+            return match.group(1)
 
         return None
 
-    except:
+    except Exception as e:
+        print("Visual stego read error:", e)
         return None
     
 # =========================
