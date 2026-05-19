@@ -189,46 +189,47 @@ def embed_hidden_text_raw(pdf_path, hidden_text):
         print("Error stego raw:", e)
         return False
     
-# def embed_text_in_pdf(input_path, output_path, text):
-#     try:
-#         reader = PdfReader(input_path)
-#         writer = PdfWriter()
+def embed_text_in_pdf(input_path, output_path, text):
+    try:
+        reader = PdfReader(input_path)
+        writer = PdfWriter()
 
-#         packet = io.BytesIO()
-#         first_page = reader.pages[0]
+        packet = io.BytesIO()
+        first_page = reader.pages[0]
 
-#         width = float(first_page.mediabox.width)
-#         height = float(first_page.mediabox.height)
+        width = float(first_page.mediabox.width)
+        height = float(first_page.mediabox.height)
 
-#         can = canvas.Canvas(packet, pagesize=(width, height))
-#         can.setFont("Helvetica", 5)
+        can = canvas.Canvas(packet, pagesize=(width, height))
 
-#         # tulis stego (JANGAN nutup konten utama)
-#         can.drawString(10, 10, "[STEGO AREA]")
-#         can.drawString(10, 5, text)
+        can.setFont("Helvetica", 3)
 
-#         can.save()
-#         packet.seek(0)
+        # ciphertext kecil di bawah
+        can.drawString(5, 5, text)
 
-#         overlay_pdf = PdfReader(packet)
+        can.save()
+        packet.seek(0)
 
-#         for i, page in enumerate(reader.pages):
-#             if i == 0:
-#                 # 🔥 FIX: copy dulu page biar ga overwrite reference
-#                 base_page = page
-#                 base_page.merge_page(overlay_pdf.pages[0])
-#                 writer.add_page(base_page)
-#             else:
-#                 writer.add_page(page)
+        overlay_pdf = PdfReader(packet)
 
-#         with open(output_path, "wb") as f:
-#             writer.write(f)
+        for i, page in enumerate(reader.pages):
 
-#         return True
+            if i == 0:
+                base_page = page
+                base_page.merge_page(overlay_pdf.pages[0])
+                writer.add_page(base_page)
 
-#     except Exception as e:
-#         print("Error embed visual stego:", e)
-#         return False
+            else:
+                writer.add_page(page)
+
+        with open(output_path, "wb") as f:
+            writer.write(f)
+
+        return True
+
+    except Exception as e:
+        print("Error embed visual stego:", e)
+        return False
 
 def extract_hidden_text_raw(pdf_path):
     try:
@@ -362,8 +363,17 @@ def sign_pdf(input_path, output_path, secret_message=None):
         shutil.copy(temp_meta_path, temp_embed_path)
         embed_hidden_text_raw(temp_embed_path, hidden_text)
 
-        # ===== STEP 5: SIGN FILE YANG SUDAH FIX =====
+        # ===== STEP 5A: FILE NORMAL =====
         shutil.copy(temp_embed_path, output_path)
+
+        # ===== STEP 5B: FILE VISUAL STEGO =====
+        visual_output = output_path.replace(".pdf", "_visual.pdf")
+
+        embed_text_in_pdf(
+            temp_embed_path,
+            visual_output,
+            hidden_text
+        )
 
         # ===== STEP 6: SIMPAN DB =====
         with open(output_path, 'rb') as f:
@@ -391,7 +401,7 @@ def sign_pdf(input_path, output_path, secret_message=None):
             if os.path.exists(f):
                 os.remove(f)
 
-        return True
+        return output_path, visual_output
 
     except Exception as e:
         print("ERROR SIGN:", e)
@@ -722,12 +732,19 @@ def upload_file():
             output_filename = filename.replace(".pdf", "_signed.pdf")
             output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
 
-            if sign_pdf(input_path, output_path, secret_message):
-                signed_filename = output_filename  # Simpan nama file
+            result = sign_pdf(input_path, output_path, secret_message)
+
+            if result:
+                normal_file, visual_file = result
+
+                signed_filename = os.path.basename(normal_file)
+                visual_filename = os.path.basename(visual_file)
+
                 return render_template('upload.html',
-                         message="File berhasil diupload dan ditandatangani!",
-                         status="success",
-                         signed_file=signed_filename)  # Kirim ke template
+                        message="File berhasil diupload dan ditandatangani!",
+                        status="success",
+                        signed_file=signed_filename,
+                        visual_file=visual_filename)  # Kirim ke template
             else:
                 return render_template('upload.html',
                                      message="Gagal menandatangani file!",

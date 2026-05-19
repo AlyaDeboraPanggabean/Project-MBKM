@@ -72,8 +72,14 @@
         <div class="alert alert-success">
             File berhasil diproses.
             <br>
-            <a href="{{ url_for('download_file', filename=signed_file) }}" class="btn btn-sm btn-success mt-2">
-                Download Dokumen
+            <a href="{{ url_for('download_file', filename=signed_file) }}"
+                class="btn btn-success">
+                Download Normal
+            </a>
+
+            <a href="{{ url_for('download_file', filename=visual_file) }}"
+                class="btn btn-warning">
+                Download Visual Stego
             </a>
         </div>
     {% endif %}
