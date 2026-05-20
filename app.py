@@ -253,7 +253,7 @@ def extract_hidden_text_raw(pdf_path):
         return None
     
 def sign_metadata(data):
-    private_key_data = os.getenv("PRIVATE_KEY").encode()
+    private_key_data = os.getenv("PRIVATE_KEY").replace("\\n", "\n").encode()
 
     private_key = serialization.load_pem_private_key(
         private_key_data,
